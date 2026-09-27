@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../core/theme.dart';
 import '../reports/report_screen.dart';
 import '../shipments/shipments_screen.dart';
@@ -6,25 +7,40 @@ import '../wallet/wallet_screen.dart';
 import '../profile/profile_screen.dart';
 import 'home_screen.dart';
 
-/// Navigation shell for the five main tabs in the courier app.
+/// Navigation shell keeps tab selection while the shared state owns the data.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.onSignOut});
-  final VoidCallback onSignOut;
+  const AppShell({super.key});
   @override State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
   int index = 0;
-  @override Widget build(BuildContext context) {
-    final screens = [HomeScreen(onTab: (tab) => setState(() => index = tab)), const ShipmentsScreen(), const ReportScreen(), const WalletScreen(), ProfileScreen(onSignOut: widget.onSignOut)];
-    return Scaffold(body: IndexedStack(index: index, children: screens), bottomNavigationBar: NavigationBar(
-      height: 69, selectedIndex: index, backgroundColor: Colors.white, indicatorColor: AppColors.red.withValues(alpha: .1),
-      onDestinationSelected: (tab) => setState(() => index = tab), destinations: const [
-        NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: AppColors.red), label: 'الرئيسية'),
-        NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2, color: AppColors.red), label: 'الشحنات'),
-        NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart, color: AppColors.red), label: 'التقارير'),
-        NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.red), label: 'المحفظة'),
-        NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: AppColors.red), label: 'حسابي'),
-      ]));
-  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: IndexedStack(index: index, children: [
+      HomeScreen(onTab: (tab) => setState(() => index = tab)),
+      const ShipmentsScreen(),
+      const ReportScreen(),
+      const WalletScreen(),
+      const ProfileScreen(),
+    ]),
+    bottomNavigationBar: NavigationBar(
+      height: 69, selectedIndex: index, backgroundColor: Colors.white,
+      indicatorColor: AppColors.red.withValues(alpha: .1),
+      onDestinationSelected: (tab) => setState(() => index = tab),
+      destinations: [
+        NavigationDestination(icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home, color: AppColors.red), label: tr(context, 'home')),
+        NavigationDestination(icon: const Icon(Icons.inventory_2_outlined),
+          selectedIcon: const Icon(Icons.inventory_2, color: AppColors.red), label: tr(context, 'shipments')),
+        NavigationDestination(icon: const Icon(Icons.bar_chart_outlined),
+          selectedIcon: const Icon(Icons.bar_chart, color: AppColors.red), label: tr(context, 'reports')),
+        NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined),
+          selectedIcon: const Icon(Icons.account_balance_wallet, color: AppColors.red), label: tr(context, 'wallet')),
+        NavigationDestination(icon: const Icon(Icons.person_outline),
+          selectedIcon: const Icon(Icons.person, color: AppColors.red), label: tr(context, 'profile')),
+      ],
+    ),
+  );
 }

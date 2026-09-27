@@ -1,25 +1,76 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/state/app_state.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
+import '../shipments/models/shipment.dart';
 
-/// Figma 11:326 — local balance and transaction history.
+/// Figma 11:326 — balance and transaction rows track delivered shipments.
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('المحفظة')), body: PageBody(children: [
-    SurfaceCard(color: AppColors.navy, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Row(children: [Icon(Icons.account_balance_wallet_outlined, color: Colors.white), SizedBox(width: 8), Text('الرصيد الحالي', style: TextStyle(color: Colors.white70))]), const SizedBox(height: 13), const Money('1,250', color: Colors.white, size: 33), const SizedBox(height: 8), const Text('آخر تحديث اليوم', style: TextStyle(color: Colors.white70))])),
-    const SizedBox(height: 18), const Row(children: [Expanded(child: _Balance('تحصيل اليوم', '450', Icons.payments_outlined)), SizedBox(width: 9), Expanded(child: _Balance('المبالغ المستحقة', '800', Icons.receipt_long_outlined))]),
-    const SizedBox(height: 20), const SectionTitle('آخر العمليات'), const SizedBox(height: 8),
-    const SurfaceCard(child: Column(children: [_Transaction('تحصيل شحنة #FX-2050', '150', 'اليوم، 02:40 م'), Divider(), _Transaction('تحصيل شحنة #FX-2048', '120', 'اليوم، 01:15 م'), Divider(), _Transaction('تسوية الرصيد', '300', 'أمس، 06:30 م')])),
-  ]));
+
+  @override Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final english = state.locale.languageCode == 'en';
+    final paid = state.shipments.where((s) => s.status == ShipmentStatus.delivered).toList();
+    return Scaffold(appBar: AppBar(title: Text(tr(context, 'wallet'))),
+      body: PageBody(children: [
+        SurfaceCard(color: AppColors.navy, child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [const Icon(Icons.account_balance_wallet_outlined, color: Colors.white),
+            const SizedBox(width: 8), Text(tr(context, 'currentBalance'),
+              style: const TextStyle(color: Colors.white70))]),
+          const SizedBox(height: 13), Money(state.totalCollected, color: Colors.white, size: 33),
+          const SizedBox(height: 8), Text(tr(context, 'lastUpdated'),
+            style: const TextStyle(color: Colors.white70)),
+        ])),
+        const SizedBox(height: 18),
+        Row(children: [
+          Expanded(child: _Balance(tr(context, 'todayCollection'), state.totalCollected, Icons.payments_outlined)),
+          const SizedBox(width: 9),
+          Expanded(child: _Balance(tr(context, 'dueAmounts'), state.pendingAmount, Icons.receipt_long_outlined)),
+        ]),
+        const SizedBox(height: 20),
+        SectionTitle(tr(context, 'recentTransactions')),
+        const SizedBox(height: 8),
+        if (paid.isEmpty) SurfaceCard(child: Text(tr(context, 'noShipments'))),
+        if (paid.isNotEmpty) SurfaceCard(child: Column(children: [
+          for (var index = 0; index < paid.length; index++) ...[
+            if (index > 0) const Divider(),
+            _Transaction('${tr(context, 'shipmentCollection')} #${paid[index].id}',
+              paid[index].amount, english ? paid[index].customerEn : paid[index].customerAr),
+          ],
+        ])),
+      ]),
+    );
+  }
 }
+
 class _Balance extends StatelessWidget {
   const _Balance(this.title, this.amount, this.icon);
-  final String title, amount;
+  final String title;
+  final int amount;
   final IconData icon;
-  @override Widget build(BuildContext context) => SurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: AppColors.red), const SizedBox(height: 10), Money(amount, size: 20), Text(title, style: const TextStyle(fontSize: 12, color: AppColors.muted))]));
+  @override Widget build(BuildContext context) => SurfaceCard(child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Icon(icon, color: AppColors.red), const SizedBox(height: 10),
+    Money(amount, size: 20), Text(title, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+  ]));
 }
+
 class _Transaction extends StatelessWidget {
-  const _Transaction(this.title, this.amount, this.date);
-  final String title, amount, date;
-  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Row(children: [const CircleAvatar(backgroundColor: Color(0xFFFFF0F2), child: Icon(Icons.arrow_downward, color: AppColors.red)), const SizedBox(width: 11), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w700)), Text(date, style: const TextStyle(fontSize: 12, color: AppColors.muted))])), Money(amount, color: AppColors.green)]));
+  const _Transaction(this.title, this.amount, this.customer);
+  final String title, customer;
+  final int amount;
+  @override Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8), child: Row(children: [
+      const CircleAvatar(backgroundColor: Color(0xFFFFF0F2),
+        child: Icon(Icons.arrow_downward, color: AppColors.red)),
+      const SizedBox(width: 11),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(customer, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+      ])),
+      Money(amount, color: AppColors.green),
+    ]));
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
-import '../../pickup/delivery_failure_screen.dart';
+import 'shipment_details.dart';
 import '../models/shipment.dart';
 
 /// Figma screen 05: the shipment card expands to show contact and delivery actions.
@@ -54,20 +54,7 @@ class _ShipmentCardState extends State<ShipmentCard> {
             Icon(expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.red),
           ]),
         ),
-        if (expanded) ...[
-          const Divider(),
-          const _Info(Icons.phone_outlined, '0551234567'),
-          const SizedBox(height: 8),
-          const _Info(Icons.notes_outlined, 'يرجى التواصل مع العميل قبل الوصول'),
-          if (shipment.status != ShipmentStatus.delivered) ...[
-            const SizedBox(height: 12),
-            ActionButton(
-              label: 'تعذر التسليم', icon: Icons.report_problem_outlined, outlined: true,
-              onPressed: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => DeliveryFailureScreen(shipmentId: shipment.id))),
-            ),
-          ],
-        ],
+        if (expanded) ShipmentDetails(shipment: shipment),
       ])),
     );
   }

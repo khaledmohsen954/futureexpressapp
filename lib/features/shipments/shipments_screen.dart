@@ -4,6 +4,8 @@ import '../../core/widgets.dart';
 import 'data/sample_shipments.dart';
 import 'models/shipment.dart';
 import 'widgets/shipment_list.dart';
+import 'all_shipments_view.dart';
+import 'pending_shipments_view.dart';
 
 /// Figma screens 03–04: all and pending shipment views with search and status filters.
 class ShipmentsScreen extends StatefulWidget {
@@ -54,7 +56,10 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
         const SizedBox(height: 10),
         Text('${visible.length} شحنات', style: const TextStyle(color: AppColors.muted)),
         const SizedBox(height: 8),
-        ShipmentList(shipments: visible),
+        // Each Figma shipment state has a dedicated UI file.
+        if (selectedFilter == 0) AllShipmentsView(shipments: visible),
+        if (selectedFilter == 1) PendingShipmentsView(shipments: visible),
+        if (selectedFilter == 2) ShipmentList(shipments: visible),
       ]),
     );
   }

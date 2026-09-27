@@ -22,9 +22,9 @@ Each screen has its own file. Widgets used by several screens live in `lib/core/
 | --- | --- | --- |
 | 11:2 | Login | `lib/features/auth/login_screen.dart` |
 | 11:23 | Home | `lib/features/home/home_screen.dart` |
-| 11:78 | All shipments | `lib/features/shipments/shipments_screen.dart` |
-| 11:131 | Pending shipments | `lib/features/shipments/shipments_screen.dart`, pending filter |
-| 11:184 | Expanded shipment | `lib/features/shipments/widgets/shipment_card.dart` |
+| 11:78 | All shipments | `lib/features/shipments/all_shipments_view.dart` |
+| 11:131 | Pending shipments | `lib/features/shipments/pending_shipments_view.dart` |
+| 11:184 | Expanded shipment | `lib/features/shipments/widgets/shipment_details.dart` |
 | 11:250 | Daily report | `lib/features/reports/report_screen.dart` |
 | 11:288 | Send report | `lib/features/reports/send_report_screen.dart` |
 | 11:326 | Wallet | `lib/features/wallet/wallet_screen.dart` |

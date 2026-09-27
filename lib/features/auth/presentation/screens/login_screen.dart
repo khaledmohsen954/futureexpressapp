@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
 
 /// Figma 11:2 — bilingual local sign-in; the phone is stored in AppState.
 class LoginScreen extends StatefulWidget {

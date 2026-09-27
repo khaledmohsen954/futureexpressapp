@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futureexpressapp/core/state/app_state.dart';
 import 'package:futureexpressapp/core/state/local_preview_repository.dart';
-import 'package:futureexpressapp/features/shipments/models/shipment.dart';
+import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
 /// An in-memory repository keeps state tests independent of platform storage.
 class MemoryRepository implements LocalPreviewRepository {

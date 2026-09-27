@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_strings.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/theme.dart';
-import '../../../core/widgets.dart';
-import '../../pickup/delivery_failure_screen.dart';
-import '../models/shipment.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../pickup/presentation/screens/delivery_failure_screen.dart';
+import '../../domain/shipment.dart';
 
 /// Figma 11:184 — local delivery and failure actions for expanded shipments.
 class ShipmentDetails extends StatelessWidget {

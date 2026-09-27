@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import 'models/shipment.dart';
-import 'widgets/shipment_list.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../domain/shipment.dart';
+import '../widgets/shipment_list.dart';
 import 'all_shipments_view.dart';
 import 'pending_shipments_view.dart';
 

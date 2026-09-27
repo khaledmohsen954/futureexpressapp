@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import '../support/support_screen.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../support/presentation/screens/support_screen.dart';
 
 /// Figma 11:359 — account details and an Arabic/English language switch.
 class ProfileScreen extends StatelessWidget {

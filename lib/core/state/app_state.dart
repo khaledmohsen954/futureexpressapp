@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import '../../features/shipments/models/shipment.dart';
+import '../../features/shipments/domain/shipment.dart';
 import '../../features/shipments/data/sample_shipments.dart';
-import 'local_preview_repository.dart';
+import '../storage/local_preview_repository.dart';
 
 /// Central state: shipment actions update every dependent screen and local storage.
 class AppState extends ChangeNotifier {

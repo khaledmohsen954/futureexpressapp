@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import '../shipments/models/shipment.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../shipments/domain/shipment.dart';
 import 'send_report_screen.dart';
-import 'widgets/report_amount_row.dart';
+import '../widgets/report_amount_row.dart';
 
 /// Figma 11:250 — report totals are computed from current shipment statuses.
 class ReportScreen extends StatelessWidget {

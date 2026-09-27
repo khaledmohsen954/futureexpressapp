@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/shipment.dart';
-import '../../../core/l10n/app_strings.dart';
+import '../../domain/shipment.dart';
+import '../../../../core/l10n/app_strings.dart';
 import 'shipment_card.dart';
 
 /// One list component powers the all, pending, and completed Figma states.

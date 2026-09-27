@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'models/shipment.dart';
-import 'widgets/shipment_list.dart';
+import '../../domain/shipment.dart';
+import '../widgets/shipment_list.dart';
 
 /// Figma 11:78 — all shipments with the shared shipment card layout.
 class AllShipmentsView extends StatelessWidget {

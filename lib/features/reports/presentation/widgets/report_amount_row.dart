@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets.dart';
+import '../../../../core/widgets.dart';
 
 /// Currency row shared by the daily summary and its confirmation.
 class ReportAmountRow extends StatelessWidget {

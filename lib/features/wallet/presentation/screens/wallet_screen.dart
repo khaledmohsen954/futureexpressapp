@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import '../shipments/models/shipment.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../shipments/domain/shipment.dart';
 
 /// Figma 11:326 — balance and transaction rows track delivered shipments.
 class WalletScreen extends StatelessWidget {

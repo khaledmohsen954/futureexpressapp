@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
 
 /// Figma 11:465 — bilingual contact preview until real support details exist.
 class SupportScreen extends StatelessWidget {

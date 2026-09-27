@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_strings.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/theme.dart';
-import '../../../core/widgets.dart';
-import '../models/shipment.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../domain/shipment.dart';
 import 'shipment_details.dart';
 
 /// Figma 11:184 — expandable card stays in sync with shipment changes.

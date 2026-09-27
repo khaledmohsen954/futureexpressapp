@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import '../shipments/models/shipment.dart';
-import '../pickup/pickup_screen.dart';
-import '../support/support_screen.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../shipments/domain/shipment.dart';
+import '../../../pickup/presentation/screens/pickup_screen.dart';
+import '../../../support/presentation/screens/support_screen.dart';
 
 /// Figma 11:23 — statistics derive from the live local shipment list.
 class HomeScreen extends StatelessWidget {

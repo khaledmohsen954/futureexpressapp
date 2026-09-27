@@ -1,4 +1,4 @@
-import '../models/shipment.dart';
+import '../domain/shipment.dart';
 
 /// Seed data for the UI preview. Live changes are owned by AppState.
 const sampleShipments = <Shipment>[

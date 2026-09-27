@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/theme.dart';
-import '../reports/report_screen.dart';
-import '../shipments/shipments_screen.dart';
-import '../wallet/wallet_screen.dart';
-import '../profile/profile_screen.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/theme.dart';
+import '../../../reports/presentation/screens/report_screen.dart';
+import '../../../shipments/presentation/screens/shipments_screen.dart';
+import '../../../wallet/presentation/screens/wallet_screen.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
 import 'home_screen.dart';
 
 /// Navigation shell keeps tab selection while the shared state owns the data.

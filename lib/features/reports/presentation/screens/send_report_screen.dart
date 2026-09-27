@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/l10n/app_strings.dart';
-import '../../core/state/app_state.dart';
-import '../../core/theme.dart';
-import '../../core/widgets.dart';
-import '../shipments/models/shipment.dart';
-import 'widgets/report_amount_row.dart';
+import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/state/app_state.dart';
+import '../../../../core/theme.dart';
+import '../../../../core/widgets.dart';
+import '../../../shipments/domain/shipment.dart';
+import '../widgets/report_amount_row.dart';
 
 /// Figma 11:288 — sends a local report snapshot after showing current totals.
 class SendReportScreen extends StatefulWidget {

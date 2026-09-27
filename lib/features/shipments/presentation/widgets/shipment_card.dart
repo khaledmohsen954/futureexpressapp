@@ -20,10 +20,10 @@ class _ShipmentCardState extends State<ShipmentCard> {
     final shipment = widget.shipment;
     final english = AppScope.of(context).locale.languageCode == 'en';
     final statusKey = switch (shipment.status) {
-      ShipmentStatus.pending => 'pending',
-      ShipmentStatus.inTransit => 'inTransit',
-      ShipmentStatus.delivered => 'delivered',
-      ShipmentStatus.failed => 'deliveryFailure',
+      ShipmentStatus.pending => AppLocaleKey.pending,
+      ShipmentStatus.inTransit => AppLocaleKey.inTransit,
+      ShipmentStatus.delivered => AppLocaleKey.delivered,
+      ShipmentStatus.failed => AppLocaleKey.deliveryFailure,
     };
     return Padding(padding: const EdgeInsets.only(bottom: 11),
       child: SurfaceCard(child: Column(children: [
@@ -45,13 +45,13 @@ class _ShipmentCardState extends State<ShipmentCard> {
         Row(children: [
           const Icon(Icons.payments_outlined, size: 19, color: AppColors.muted),
           const SizedBox(width: 8),
-          Text(tr(context, 'amount'), style: const TextStyle(color: AppColors.muted)),
+          Text(tr(context, AppLocaleKey.amount), style: const TextStyle(color: AppColors.muted)),
           const Spacer(), Money(shipment.amount),
         ]),
         const SizedBox(height: 10),
         InkWell(onTap: () => setState(() => expanded = !expanded),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(tr(context, expanded ? 'hideDetails' : 'showDetails'),
+            Text(tr(context, expanded ? AppLocaleKey.hideDetails : AppLocaleKey.showDetails),
               style: const TextStyle(color: AppColors.red, fontWeight: FontWeight.w700)),
             Icon(expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.red),
           ])),

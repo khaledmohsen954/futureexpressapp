@@ -13,6 +13,6 @@ class ShipmentList extends StatelessWidget {
     for (final shipment in shipments)
       ShipmentCard(key: ValueKey(shipment.id), shipment: shipment),
     if (shipments.isEmpty)
-      Padding(padding: const EdgeInsets.all(35), child: Center(child: Text(tr(context, 'noShipments')))),
+      Padding(padding: const EdgeInsets.all(35), child: Center(child: Text(tr(context, AppLocaleKey.noShipments)))),
   ]);
 }

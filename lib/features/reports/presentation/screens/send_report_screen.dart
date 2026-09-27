@@ -18,27 +18,27 @@ class _SendReportScreenState extends State<SendReportScreen> {
 
   @override Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    return Scaffold(appBar: AppBar(title: Text(tr(context, 'sendReport'))),
+    return Scaffold(appBar: AppBar(title: Text(tr(context, AppLocaleKey.sendReport))),
       body: PageBody(children: [
-        Text(tr(context, 'reviewReport'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+        Text(tr(context, AppLocaleKey.reviewReport), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
         const SizedBox(height: 10),
         SurfaceCard(child: Column(children: [
-          ReportAmountRow(tr(context, 'deliveredShipments'), '${state.count(ShipmentStatus.delivered)}', isCurrency: false),
+          ReportAmountRow(tr(context, AppLocaleKey.deliveredShipments), '${state.count(ShipmentStatus.delivered)}', isCurrency: false),
           const Divider(),
-          ReportAmountRow(tr(context, 'collectedAmount'), '${state.totalCollected}'),
+          ReportAmountRow(tr(context, AppLocaleKey.collectedAmount), '${state.totalCollected}'),
         ])),
         const SizedBox(height: 22),
-        Text(tr(context, 'notes'), style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(tr(context, AppLocaleKey.notes), style: const TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         TextField(controller: notes, maxLines: 4,
-          decoration: InputDecoration(hintText: tr(context, 'notesHint'))),
+          decoration: InputDecoration(hintText: tr(context, AppLocaleKey.notesHint))),
         const SizedBox(height: 24),
-        ActionButton(label: tr(context, state.reportSent ? 'reportSent' : 'confirmSend'),
+        ActionButton(label: tr(context, state.reportSent ? AppLocaleKey.reportSent : AppLocaleKey.confirmSend),
           icon: state.reportSent ? Icons.check_circle_outline : Icons.send_outlined,
           color: state.reportSent ? AppColors.green : AppColors.red,
           onPressed: state.reportSent ? null : () {
             state.sendReport(notes.text.trim());
-            showLocalMessage(context, tr(context, 'reportSaved'));
+            showLocalMessage(context, tr(context, AppLocaleKey.reportSaved));
           }),
       ]),
     );

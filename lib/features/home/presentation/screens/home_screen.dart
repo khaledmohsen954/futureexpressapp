@@ -18,41 +18,41 @@ class HomeScreen extends StatelessWidget {
     final recent = state.shipments.first;
     final english = state.locale.languageCode == 'en';
     return Scaffold(
-      appBar: AppBar(title: Text(tr(context, 'home')), actions: [IconButton(
-        tooltip: tr(context, 'help'), icon: const Icon(Icons.headset_mic_outlined),
+      appBar: AppBar(title: Text(tr(context, AppLocaleKey.home)), actions: [IconButton(
+        tooltip: tr(context, AppLocaleKey.help), icon: const Icon(Icons.headset_mic_outlined),
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen())))]),
       body: PageBody(children: [
-        Text(tr(context, 'welcome'), style: const TextStyle(color: AppColors.muted)),
+        Text(tr(context, AppLocaleKey.welcome), style: const TextStyle(color: AppColors.muted)),
         const SizedBox(height: 15),
         SurfaceCard(color: AppColors.navy, child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [const Icon(Icons.local_shipping_outlined, color: Colors.white),
-            const SizedBox(width: 9), Text(tr(context, 'pickupTask'),
+            const SizedBox(width: 9), Text(tr(context, AppLocaleKey.pickupTask),
               style: const TextStyle(color: Colors.white70))]),
           const SizedBox(height: 7),
-          Text(tr(context, 'warehousePickup'), style: const TextStyle(
+          Text(tr(context, AppLocaleKey.warehousePickup), style: const TextStyle(
             fontSize: 19, fontWeight: FontWeight.w700, color: Colors.white)),
           const SizedBox(height: 12),
-          ActionButton(label: tr(context, 'startPickup'), icon: Icons.qr_code_scanner,
+          ActionButton(label: tr(context, AppLocaleKey.startPickup), icon: Icons.qr_code_scanner,
             onPressed: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const PickupScreen()))),
         ])),
         const SizedBox(height: 19),
         Row(children: [
-          Expanded(child: _Stat(label: tr(context, 'todayShipments'),
+          Expanded(child: _Stat(label: tr(context, AppLocaleKey.todayShipments),
             value: '${state.shipments.length}', icon: Icons.inventory_2_outlined, onTap: () => onTab(1))),
           const SizedBox(width: 10),
-          Expanded(child: _Stat(label: tr(context, 'delivered'),
+          Expanded(child: _Stat(label: tr(context, AppLocaleKey.delivered),
             value: '${state.count(ShipmentStatus.delivered)}', icon: Icons.check_circle_outline,
             onTap: () => onTab(1))),
         ]),
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: _Stat(label: tr(context, 'inTransit'),
+          Expanded(child: _Stat(label: tr(context, AppLocaleKey.inTransit),
             value: '${state.count(ShipmentStatus.inTransit)}', icon: Icons.local_shipping_outlined,
             onTap: () => onTab(1))),
           const SizedBox(width: 10),
-          Expanded(child: _Stat(label: tr(context, 'todayCollection'),
+          Expanded(child: _Stat(label: tr(context, AppLocaleKey.todayCollection),
             value: '${state.totalCollected} \u20c1', icon: Icons.payments_outlined,
             onTap: () => onTab(3))),
         ]),
@@ -61,13 +61,13 @@ class HomeScreen extends StatelessWidget {
           const Icon(Icons.power_settings_new, color: AppColors.red),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr(context, 'shiftStatus'), style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(tr(context, 'shiftHint'), style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+            Text(tr(context, AppLocaleKey.shiftStatus), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(tr(context, AppLocaleKey.shiftHint), style: const TextStyle(color: AppColors.muted, fontSize: 12)),
           ])),
           Switch(value: state.onDuty, activeTrackColor: AppColors.green, onChanged: state.setDuty),
         ])),
         const SizedBox(height: 17),
-        SectionTitle(tr(context, 'recentShipments'), action: tr(context, 'seeAll'),
+        SectionTitle(tr(context, AppLocaleKey.recentShipments), action: tr(context, AppLocaleKey.seeAll),
           onAction: () => onTab(1)),
         const SizedBox(height: 8),
         SurfaceCard(child: Row(children: [

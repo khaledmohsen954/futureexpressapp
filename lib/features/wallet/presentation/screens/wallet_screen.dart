@@ -13,31 +13,31 @@ class WalletScreen extends StatelessWidget {
     final state = AppScope.of(context);
     final english = state.locale.languageCode == 'en';
     final paid = state.shipments.where((s) => s.status == ShipmentStatus.delivered).toList();
-    return Scaffold(appBar: AppBar(title: Text(tr(context, 'wallet'))),
+    return Scaffold(appBar: AppBar(title: Text(tr(context, AppLocaleKey.wallet))),
       body: PageBody(children: [
         SurfaceCard(color: AppColors.navy, child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [const Icon(Icons.account_balance_wallet_outlined, color: Colors.white),
-            const SizedBox(width: 8), Text(tr(context, 'currentBalance'),
+            const SizedBox(width: 8), Text(tr(context, AppLocaleKey.currentBalance),
               style: const TextStyle(color: Colors.white70))]),
           const SizedBox(height: 13), Money(state.totalCollected, color: Colors.white, size: 33),
-          const SizedBox(height: 8), Text(tr(context, 'lastUpdated'),
+          const SizedBox(height: 8), Text(tr(context, AppLocaleKey.lastUpdated),
             style: const TextStyle(color: Colors.white70)),
         ])),
         const SizedBox(height: 18),
         Row(children: [
-          Expanded(child: _Balance(tr(context, 'todayCollection'), state.totalCollected, Icons.payments_outlined)),
+          Expanded(child: _Balance(tr(context, AppLocaleKey.todayCollection), state.totalCollected, Icons.payments_outlined)),
           const SizedBox(width: 9),
-          Expanded(child: _Balance(tr(context, 'dueAmounts'), state.pendingAmount, Icons.receipt_long_outlined)),
+          Expanded(child: _Balance(tr(context, AppLocaleKey.dueAmounts), state.pendingAmount, Icons.receipt_long_outlined)),
         ]),
         const SizedBox(height: 20),
-        SectionTitle(tr(context, 'recentTransactions')),
+        SectionTitle(tr(context, AppLocaleKey.recentTransactions)),
         const SizedBox(height: 8),
-        if (paid.isEmpty) SurfaceCard(child: Text(tr(context, 'noShipments'))),
+        if (paid.isEmpty) SurfaceCard(child: Text(tr(context, AppLocaleKey.noShipments))),
         if (paid.isNotEmpty) SurfaceCard(child: Column(children: [
           for (var index = 0; index < paid.length; index++) ...[
             if (index > 0) const Divider(),
-            _Transaction('${tr(context, 'shipmentCollection')} #${paid[index].id}',
+            _Transaction('${tr(context, AppLocaleKey.shipmentCollection)} #${paid[index].id}',
               paid[index].amount, english ? paid[index].customerEn : paid[index].customerAr),
           ],
         ])),

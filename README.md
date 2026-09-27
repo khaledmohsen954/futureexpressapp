@@ -18,7 +18,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for startup, navigation, state transition
 
 ## Structure and Figma mapping
 
-Each screen has its own file. Widgets used by several screens live in `lib/core/widgets/`; `lib/core/l10n/app_strings.dart` contains Arabic and English UI copy. `lib/core/state/app_state.dart` owns courier state and computes the dashboard, report, and wallet from shipments. `lib/core/storage/local_preview_repository.dart` saves only the demo progress and language through `shared_preferences`. Shipment seed records and cards live under `lib/features/shipments/`.
+Each screen has its own file. Widgets used by several screens live in `lib/core/widgets/`; `lib/core/l10n/app_locale_key.dart` defines `AppLocaleKey` for every translated phrase; `app_strings.dart` contains its Arabic and English values. `lib/core/state/app_state.dart` owns courier state and computes the dashboard, report, and wallet from shipments. `lib/core/storage/local_preview_repository.dart` saves only the demo progress and language through `shared_preferences`. Shipment seed records and cards live under `lib/features/shipments/`.
 
 | Figma node | Screen or state | Implementation |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ Each screen has its own file. Widgets used by several screens live in `lib/core/
 | 11:428 | Delivery failure | `lib/features/pickup/presentation/screens/delivery_failure_screen.dart` |
 | 11:465 | Support | `lib/features/support/presentation/screens/support_screen.dart` |
 
-`lib/features/shipments/data/sample_shipments.dart` contains startup examples; `lib/features/shipments/domain/shipment.dart` contains the data shape and statuses. `lib/features/reports/presentation/widgets/` holds the report row shared by the two report screens. `assets/auth/` contains the supplied logo; `pubspec.yaml` registers its path.
+`lib/features/shipments/data/sample_shipments.dart` contains startup examples; `lib/features/shipments/domain/shipment.dart` contains the data shape and statuses. `lib/features/reports/presentation/widgets/` holds the report row shared by the two report screens. `lib/core/assets/app_images.dart` defines `AppImages.logo` for the supplied logo in `assets/auth/`; `pubspec.yaml` registers the same asset path.
 
 The supplied Future Express logo is bundled in `assets/auth/future_express_logo.png`. Tajawal typography is provided by `google_fonts` when fonts are available; for offline production use, bundle the Tajawal font files. The new Saudi Riyal sign uses Unicode U+20C1 and needs a font with that glyph on the target device.
 

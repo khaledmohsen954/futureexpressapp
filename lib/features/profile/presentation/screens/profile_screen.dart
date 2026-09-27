@@ -10,30 +10,30 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
   @override Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    return Scaffold(appBar: AppBar(title: Text(tr(context, 'profile'))),
+    return Scaffold(appBar: AppBar(title: Text(tr(context, AppLocaleKey.profile))),
       body: PageBody(children: [
         SurfaceCard(child: Column(children: [
           const CircleAvatar(radius: 36, backgroundColor: Color(0xFFFFEDF0),
             child: Icon(Icons.person, size: 38, color: AppColors.red)),
           const SizedBox(height: 12),
-          Text(tr(context, 'courierName'), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
-          Text(tr(context, 'courier'), style: const TextStyle(color: AppColors.muted)),
+          Text(tr(context, AppLocaleKey.courierName), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+          Text(tr(context, AppLocaleKey.courier), style: const TextStyle(color: AppColors.muted)),
           const SizedBox(height: 8),
-          Text(tr(context, 'courierNumber'), style: const TextStyle(color: AppColors.muted)),
+          Text(tr(context, AppLocaleKey.courierNumber), style: const TextStyle(color: AppColors.muted)),
         ])),
-        const SizedBox(height: 20), SectionTitle(tr(context, 'personalData')),
+        const SizedBox(height: 20), SectionTitle(tr(context, AppLocaleKey.personalData)),
         const SizedBox(height: 8),
         SurfaceCard(child: Column(children: [
-          _ProfileRow(Icons.phone_outlined, tr(context, 'phone'), state.phone),
+          _ProfileRow(Icons.phone_outlined, tr(context, AppLocaleKey.phone), state.phone),
           const Divider(),
-          _ProfileRow(Icons.mail_outline, tr(context, 'email'), 'ahmed@futureexpress.sa'),
+          _ProfileRow(Icons.mail_outline, tr(context, AppLocaleKey.email), 'ahmed@futureexpress.sa'),
           const Divider(),
-          _ProfileRow(Icons.location_on_outlined, tr(context, 'city'), tr(context, 'riyadh')),
+          _ProfileRow(Icons.location_on_outlined, tr(context, AppLocaleKey.city), tr(context, AppLocaleKey.riyadh)),
         ])),
         const SizedBox(height: 19),
         SurfaceCard(child: InkWell(onTap: state.toggleLanguage, child: Row(children: [
           const Icon(Icons.language, color: AppColors.red), const SizedBox(width: 10),
-          Expanded(child: Text(tr(context, 'changeLanguage'),
+          Expanded(child: Text(tr(context, AppLocaleKey.changeLanguage),
             style: const TextStyle(fontWeight: FontWeight.w700))),
           const Icon(Icons.chevron_left),
         ]))),
@@ -44,12 +44,12 @@ class ProfileScreen extends StatelessWidget {
           child: Row(children: [
             const Icon(Icons.headset_mic_outlined, color: AppColors.red),
             const SizedBox(width: 10),
-            Expanded(child: Text(tr(context, 'help'),
+            Expanded(child: Text(tr(context, AppLocaleKey.help),
               style: const TextStyle(fontWeight: FontWeight.w700))),
             const Icon(Icons.chevron_left),
           ]))),
         const SizedBox(height: 20),
-        ActionButton(label: tr(context, 'logout'), icon: Icons.logout,
+        ActionButton(label: tr(context, AppLocaleKey.logout), icon: Icons.logout,
           outlined: true, onPressed: state.signOut),
       ]),
     );

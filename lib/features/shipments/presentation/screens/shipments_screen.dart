@@ -30,24 +30,24 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
       return matchesStatus && searchFields.contains(search.toLowerCase());
     }).toList();
 
-    return Scaffold(appBar: AppBar(title: Text(tr(context, 'shipments'))),
+    return Scaffold(appBar: AppBar(title: Text(tr(context, AppLocaleKey.shipments))),
       body: PageBody(children: [
         TextField(onChanged: (value) => setState(() => search = value.trim()),
           decoration: InputDecoration(prefixIcon: const Icon(Icons.search),
-            hintText: tr(context, 'searchShipments'))),
+            hintText: tr(context, AppLocaleKey.searchShipments))),
         const SizedBox(height: 14),
         Row(children: List.generate(3, (index) => Expanded(child: Padding(
           padding: const EdgeInsetsDirectional.only(end: 7),
           child: ChoiceChip(
             label: SizedBox(width: double.infinity, child: Text(
-              tr(context, ['all', 'pendingTab', 'completedTab'][index]), textAlign: TextAlign.center)),
+              tr(context, [AppLocaleKey.all, AppLocaleKey.pendingTab, AppLocaleKey.completedTab][index]), textAlign: TextAlign.center)),
             selected: selectedFilter == index, selectedColor: AppColors.navy,
             labelStyle: TextStyle(color: selectedFilter == index ? Colors.white : AppColors.navy),
             onSelected: (_) => setState(() => selectedFilter = index),
           ),
         )))),
         const SizedBox(height: 10),
-        Text('${visible.length} ${tr(context, 'shipmentCount')}',
+        Text('${visible.length} ${tr(context, AppLocaleKey.shipmentCount)}',
           style: const TextStyle(color: AppColors.muted)),
         const SizedBox(height: 8),
         if (selectedFilter == 0) AllShipmentsView(shipments: visible),

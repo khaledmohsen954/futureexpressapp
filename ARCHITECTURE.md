@@ -60,7 +60,7 @@ The wallet total is the sum of delivered shipment amounts. Its pending amount is
 
 `LocalPreviewRepository` uses `SharedPreferencesAsync` under the key `future_express_preview_v1`. It keeps language, duty status, shipment status overrides, picked-up IDs, failure reasons and notes, report notes and sent flag. Writes are queued in action order. Login credentials and the entered phone number are not persisted. The sample shipment fields remain in source code; there is no add/edit shipment form or remote synchronization. This storage is suitable for preview progress, not authoritative delivery or financial records.
 
-`core/l10n/app_strings.dart` holds parallel Arabic and English keys. Screens call `tr(context, key)` and `app.dart` supplies the locale and Flutter localization delegates. Switching in login or profile changes the active locale and persists it locally. The supported languages are Arabic and English only.
+`core/l10n/app_locale_key.dart` defines the `AppLocaleKey` constants. `app_strings.dart` holds parallel Arabic and English values indexed by those constants. Screens call `tr(context, AppLocaleKey.someKey)` and `app.dart` supplies the locale and Flutter localization delegates. Switching in login or profile changes the active locale and persists it locally. The supported languages are Arabic and English only.
 
 ## Source structure
 
@@ -70,13 +70,14 @@ The wallet total is the sum of delivered shipment amounts. Its pending amount is
 | `lib/app.dart` | Root widget, theme, locale, localization delegates, app scope |
 | `lib/core/state/app_state.dart` | Shared state, derived totals, workflow actions, state provider |
 | `lib/core/storage/local_preview_repository.dart` | Read/write local preview snapshots |
-| `lib/core/l10n/app_strings.dart` | Arabic and English interface text |
+| `lib/core/l10n/app_locale_key.dart`, `app_strings.dart` | Centralized text keys and Arabic/English values |
+| `lib/core/assets/app_images.dart` | Centralized image paths used by Dart widgets |
 | `lib/core/theme.dart`, `lib/core/widgets/` | Visual tokens and reusable buttons/cards/layout/currency |
 | `lib/features/shipments/domain/shipment.dart` | Shipment entity and status/payment enums |
 | `lib/features/shipments/data/sample_shipments.dart` | Initial demo shipment records |
 | `lib/features/*/presentation/screens/` | One screen or Figma state per file |
 | `lib/features/*/presentation/widgets/` | Feature-specific reusable UI |
-| `assets/auth/` | Supplied Future Express logo |
+| `assets/auth/` | Supplied Future Express logo registered in `pubspec.yaml` |
 | `test/app_state_test.dart` | Local workflow and restore tests |
 | `.github/workflows/flutter.yml` | Stable Flutter analyze, test and web build job |
 

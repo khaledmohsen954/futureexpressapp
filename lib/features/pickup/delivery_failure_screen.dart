@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 
-/// A selectable reason and optional note for a failed delivery.
+/// Figma 11:428 — delivery failure reason and notes.
 class DeliveryFailureScreen extends StatefulWidget {
   const DeliveryFailureScreen({super.key, required this.shipmentId});
   final String shipmentId;

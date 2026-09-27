@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 
-/// Contact methods are preview actions until real phone and WhatsApp details exist.
+/// Figma 11:465 — help options shown without contact integration.
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
   @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('الدعم والمساعدة')), body: PageBody(children: [

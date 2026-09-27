@@ -4,7 +4,7 @@ import '../../core/widgets.dart';
 import '../pickup/pickup_screen.dart';
 import '../support/support_screen.dart';
 
-/// Dashboard summaries mirror Figma; actions open their respective local pages.
+/// Figma 11:23 — courier dashboard and daily actions.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.onTab});
   final ValueChanged<int> onTab;

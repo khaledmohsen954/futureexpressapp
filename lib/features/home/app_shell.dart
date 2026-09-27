@@ -6,7 +6,7 @@ import '../wallet/wallet_screen.dart';
 import '../profile/profile_screen.dart';
 import 'home_screen.dart';
 
-/// Owns the five primary destinations and keeps navigation local to the app.
+/// Navigation shell for the five main tabs in the courier app.
 class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.onSignOut});
   final VoidCallback onSignOut;

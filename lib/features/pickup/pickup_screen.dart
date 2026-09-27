@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 
-/// Pickup flow simulates a scan locally; camera access can be integrated later.
+/// Figma 11:398 — scan preview and shipment pickup count.
 class PickupScreen extends StatefulWidget {
   const PickupScreen({super.key});
   @override State<PickupScreen> createState() => _PickupScreenState();

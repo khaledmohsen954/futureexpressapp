@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 
-/// Wallet balances and sample transaction history are local preview data.
+/// Figma 11:326 — local balance and transaction history.
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
   @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('المحفظة')), body: PageBody(children: [

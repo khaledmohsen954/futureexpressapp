@@ -3,7 +3,7 @@ import '../../core/theme.dart';
 import '../../core/widgets.dart';
 import '../support/support_screen.dart';
 
-/// Courier identity and account actions, including local sign-out.
+/// Figma 11:359 — courier profile, support and sign-out.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.onSignOut});
   final VoidCallback onSignOut;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 
-/// Local sign-in preview: accepts input and opens the UI without an API.
+/// Figma 11:2 — sign-in form and local entry into the app.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
   final VoidCallback onLogin;
@@ -14,7 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool obscure = true;
   @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Center(child: SingleChildScrollView(
     padding: const EdgeInsets.all(24), child: Form(key: formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 35), Image.asset('assets/images/logo.png', height: 96, fit: BoxFit.contain),
+      const SizedBox(height: 35), Image.asset('assets/auth/future_express_logo.png', height: 96, fit: BoxFit.contain),
       const SizedBox(height: 36), const Text('مرحبًا بعودتك', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
       const SizedBox(height: 8), const Text('سجل دخولك لمتابعة شحناتك اليومية', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
       const SizedBox(height: 36), const Text('رقم الجوال', style: TextStyle(fontWeight: FontWeight.w700)), const SizedBox(height: 8),

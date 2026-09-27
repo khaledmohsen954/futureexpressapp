@@ -12,7 +12,7 @@ flutter pub get
 flutter run
 ```
 
-The `flutter create` command generates platform runners for the installed stable SDK while keeping the existing `lib`, `assets`, and `pubspec.yaml`. Use `flutter analyze` to check the Dart source. Sign in with any nonempty phone number and password for the UI preview.
+The `flutter create` command generates platform runners for the installed stable SDK while keeping the existing `lib`, `assets`, and `pubspec.yaml`. Use `flutter analyze` and `flutter build web` to check the Dart source and build a preview. GitHub Actions runs these checks on every push. Sign in with any nonempty phone number and password for the UI preview.
 
 ## Structure
 

@@ -2,4 +2,6 @@
 /// Keep these paths in sync with pubspec.yaml when adding or renaming images.
 abstract final class AppImages {
   static const String logo = 'assets/auth/future_express_logo.png';
+  static const String fexLogo1024_500 = 'assets/png/fexLogo1024_500.png';
+  static const String fexLogo = 'assets/png/fexLogo.png';
 }

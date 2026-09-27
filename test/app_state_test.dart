@@ -1,13 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futureexpressapp/core/state/app_state.dart';
-import 'package:futureexpressapp/core/state/local_preview_repository.dart';
+import 'package:futureexpressapp/core/storage/local_preview_repository.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
 /// An in-memory repository keeps state tests independent of platform storage.
 class MemoryRepository implements LocalPreviewRepository {
   Map<String, dynamic> value = {};
-  @override Future<Map<String, dynamic>> read() async => value;
-  @override Future<void> write(Map<String, dynamic> data) async { value = data; }
+  @override
+  Future<Map<String, dynamic>> read() async => value;
+  @override
+  Future<void> write(Map<String, dynamic> data) async {
+    value = data;
+  }
 }
 
 void main() {

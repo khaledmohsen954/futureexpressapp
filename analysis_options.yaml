@@ -1,6 +1,9 @@
 analyzer:
+  errors:
+    non_const_call_to_literal_constructor: ignore
   exclude:
     - build/**
     - android/**
     - ios/**
+    - macos/**
 include: package:flutter_lints/flutter.yaml

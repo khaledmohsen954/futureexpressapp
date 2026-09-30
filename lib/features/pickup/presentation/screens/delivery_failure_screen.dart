@@ -8,46 +8,77 @@ import '../../../../core/widgets.dart';
 class DeliveryFailureScreen extends StatefulWidget {
   const DeliveryFailureScreen({super.key, required this.shipmentId});
   final String shipmentId;
-  @override State<DeliveryFailureScreen> createState() => _DeliveryFailureScreenState();
+  @override
+  State<DeliveryFailureScreen> createState() => _DeliveryFailureScreenState();
 }
 
 class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
   String? reasonKey;
   final note = TextEditingController();
-  final reasons = const [AppLocaleKey.reasonUnavailable, AppLocaleKey.reasonAddress, AppLocaleKey.reasonRefused, AppLocaleKey.reasonOther];
-  @override void dispose() { note.dispose(); super.dispose(); }
+  final reasons = const [
+    AppLocaleKey.reasonUnavailable,
+    AppLocaleKey.reasonAddress,
+    AppLocaleKey.reasonRefused,
+    AppLocaleKey.reasonOther
+  ];
+  @override
+  void dispose() {
+    note.dispose();
+    super.dispose();
+  }
 
-  @override Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(tr(context, AppLocaleKey.deliveryFailure))),
-    body: PageBody(children: [
-      SurfaceCard(child: Row(children: [
-        const Icon(Icons.inventory_2_outlined, color: AppColors.red),
-        const SizedBox(width: 12), Text('#${widget.shipmentId}',
-          style: const TextStyle(fontWeight: FontWeight.w700)),
-      ])),
-      const SizedBox(height: 23),
-      Text(tr(context, AppLocaleKey.reasonTitle), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 10),
-      for (final key in reasons) Padding(padding: const EdgeInsets.only(bottom: 8),
-        child: SurfaceCard(padding: EdgeInsets.zero, child: RadioListTile<String>(
-          title: Text(tr(context, key)), value: key, groupValue: reasonKey,
-          activeColor: AppColors.red, onChanged: (value) => setState(() => reasonKey = value)))),
-      const SizedBox(height: 13),
-      Text(tr(context, AppLocaleKey.notes), style: const TextStyle(fontWeight: FontWeight.w700)),
-      const SizedBox(height: 8),
-      TextField(controller: note, maxLines: 3,
-        decoration: InputDecoration(hintText: tr(context, AppLocaleKey.extraDetails))),
-      const SizedBox(height: 24),
-      ActionButton(label: tr(context, AppLocaleKey.confirmFailure), icon: Icons.report_problem_outlined,
-        onPressed: () {
-          if (reasonKey == null) {
-            showLocalMessage(context, tr(context, AppLocaleKey.chooseReason));
-            return;
-          }
-          AppScope.of(context).fail(widget.shipmentId, reasonKey!, note.text.trim());
-          showLocalMessage(context, tr(context, AppLocaleKey.failureSaved));
-          Navigator.pop(context);
-        }),
-    ]),
-  );
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text(tr(context, AppLocaleKey.deliveryFailure))),
+        body: PageBody(children: [
+          SurfaceCard(
+              child: Row(children: [
+            const Icon(Icons.inventory_2_outlined, color: AppColors.red),
+            const SizedBox(width: 12),
+            Text('#${widget.shipmentId}',
+                style: Theme.of(context).textTheme.labelLarge),
+          ])),
+          const SizedBox(height: 23),
+          Text(tr(context, AppLocaleKey.reasonTitle),
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
+          for (final key in reasons)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: SurfaceCard(
+                    padding: EdgeInsets.zero,
+                    child: RadioListTile<String>(
+                        title: Text(tr(context, key)),
+                        value: key,
+                        groupValue: reasonKey,
+                        activeColor: AppColors.red,
+                        onChanged: (value) =>
+                            setState(() => reasonKey = value)))),
+          const SizedBox(height: 13),
+          Text(tr(context, AppLocaleKey.notes),
+              style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+              controller: note,
+              maxLines: 3,
+              decoration: InputDecoration(
+                  hintText: tr(context, AppLocaleKey.extraDetails))),
+          const SizedBox(height: 24),
+          ActionButton(
+              label: tr(context, AppLocaleKey.confirmFailure),
+              icon: Icons.report_problem_outlined,
+              onPressed: () {
+                if (reasonKey == null) {
+                  showLocalMessage(
+                      context, tr(context, AppLocaleKey.chooseReason));
+                  return;
+                }
+                AppScope.of(context)
+                    .fail(widget.shipmentId, reasonKey!, note.text.trim());
+                showLocalMessage(
+                    context, tr(context, AppLocaleKey.failureSaved));
+                Navigator.pop(context);
+              }),
+        ]),
+      );
 }

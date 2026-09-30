@@ -1,6 +1,59 @@
 /// Stable identifiers for every translated UI phrase.
 /// Add new keys here and provide Arabic and English values in app_strings.dart.
 abstract final class AppLocaleKey {
+  static const String validateName = 'validateName';
+  static const String validateEmail = 'validateEmail';
+  static const String validateEmailStructure = 'validateEmailStructure';
+  static const String validatePhone = 'validatePhone';
+  static const String validatePhoneStartWithZero = 'validatePhoneStartWithZero';
+  static const String validatePhoneContainTenNumbers = 'validatePhoneContainTenNumbers';
+  static const String validatePassword = 'validatePassword';
+  static const String enterYourPassword = 'enterYourPassword';
+  static const String validateConfirmPassword = 'validateConfirmPassword';
+  static const String validateEmpty = 'validateEmpty';
+  static const String validateConfirmPasswordNotMatch = 'validateConfirmPasswordNotMatch';
+  static const String youMustLoginToContinue = 'youMustLoginToContinue';
+  static const String lognAsGuest = 'lognAsGuest';
+  static const String login = 'login';
+  static const String welcomeBack = 'welcomeBack';
+  static const String pleaseEnterYourMobileNumber = 'pleaseEnterYourMobileNumber';
+  static const String pleaseEnterYourMobileNumberStartWith05 =
+      'pleaseEnterYourMobileNumberStartWith05';
+  static const String otp = 'otp';
+  static const String otpMessage = 'otpMessage';
+  static const String changeNumber = 'changeNumber';
+  static const String otpValidation = 'otpValidation';
+  static const String resendAfter = 'resendAfter';
+  static const String confirm = 'confirm';
+  static const String confirmAccount = 'confirmAccount';
+  static const String accountConfirmation = 'accountConfirmation';
+  static const String welcome = 'welcome';
+  static const String companyName = 'companyName';
+  static const String userName = 'userName';
+  static const String pleaseNotContainYourNameOrEmail = 'pleaseNotContainYourNameOrEmail';
+  static const String atLeast8Characters = 'atLeast8Characters';
+  static const String password = 'password';
+  static const String confirmPassword = 'confirmPassword';
+  static const String forgotYourPassword = 'forgotYourPassword';
+  static const String pleaseEnterYourOtpCorrect = 'pleaseEnterYourOtpCorrect';
+  static const String pleaseEnterYourOtp = 'pleaseEnterYourOtp';
+  static const String pleaseEnterYourPhoneNumberStartWith05 =
+      'pleaseEnterYourPhoneNumberStartWith05';
+  static const String pleaseEnterYourPhoneNumber = 'pleaseEnterYourPhoneNumber';
+  static const String passwordNotMatch = 'passwordNotMatch';
+  static const String pleaseEnterYourConfirmPassword = 'pleaseEnterYourConfirmPassword';
+  static const String pleaseEnterYourPassword = 'pleaseEnterYourPassword';
+  static const String userNameRequired = 'userNameRequired';
+  static const String companyNameRequired = 'companyNameRequired';
+  static const String retrievePassword = 'retrievePassword';
+  static const String weWillSendVerificationCodeToYourMobile =
+      'weWillSendVerificationCodeToYourMobile';
+  static const String sendCode = 'sendCode';
+  static const String pleaseEnterYourNewPassword = 'pleaseEnterYourNewPassword';
+  static const String welcomeInFutureHub = 'welcomeInFutureHub';
+  static const String letsConfirmYourAccount = 'letsConfirmYourAccount';
+  static const String letsWriteYourPassword = 'letsWriteYourPassword';
+  static const String pleaseChooseYourAccount = 'pleaseChooseYourAccount';
   static const String home = 'home';
   static const String shipments = 'shipments';
   static const String reports = 'reports';
@@ -10,15 +63,15 @@ abstract final class AppLocaleKey {
   static const String loginSubtitle = 'loginSubtitle';
   static const String phone = 'phone';
   static const String phoneHint = 'phoneHint';
-  static const String password = 'password';
+
   static const String passwordHint = 'passwordHint';
   static const String phoneRequired = 'phoneRequired';
   static const String passwordRequired = 'passwordRequired';
   static const String forgot = 'forgot';
-  static const String login = 'login';
+
   static const String loginFooter = 'loginFooter';
   static const String changeLanguage = 'changeLanguage';
-  static const String welcome = 'welcome';
+
   static const String pickupTask = 'pickupTask';
   static const String warehousePickup = 'warehousePickup';
   static const String startPickup = 'startPickup';
@@ -105,4 +158,35 @@ abstract final class AppLocaleKey {
   static const String markDelivered = 'markDelivered';
   static const String deliverySaved = 'deliverySaved';
   static const String alreadySent = 'alreadySent';
+  static const String ok = 'ok';
+  static const String locationPermission = 'locationPermission';
+  static const String openSettings = 'openSettings';
+  static const String locationPermissionDescription = 'locationPermissionDescription';
+  static const String locationServiceDisabled = 'locationServiceDisabled';
+  static const String locationServiceDisabledDescription = 'locationServiceDisabledDescription';
+  static const String locationRequiredForOrderImages = 'locationRequiredForOrderImages';
+  static const String cancel = 'cancel';
+  static const String tryAgain = 'tryAgain';
+  static const String statusReceived = 'statusReceived';
+  static const String statusDelivered = 'statusDelivered';
+  static const String statusDeliveryFailed = 'statusDeliveryFailed';
+  static const String statusInTransit = 'statusInTransit';
+  static const String scanQr = 'scanQr';
+  static const String customerName = 'customerName';
+  static const String paymentMethod = 'paymentMethod';
+  static const String address = 'address';
+  static const String menu = 'menu';
+  static const String shipmentDetails = 'shipmentDetails';
+  static const String fullyPaidOnline = 'fullyPaidOnline';
+  static const String responsibleCarrier = 'responsibleCarrier';
+  static const String assignTime = 'assignTime';
+  static const String agentName = 'agentName';
+  static const String shipmentNumber = 'shipmentNumber';
+  static const String nationalLocation = 'nationalLocation';
+  static const String openLocationOnMap = 'openLocationOnMap';
+  static const String contactWithWhatsapp = 'contactWithWhatsapp';
+  static const String pleasePositionQrWithinFrame = 'pleasePositionQrWithinFrame';
+  static const String retry = 'retry';
+  static const String qrCode = 'qrCode';
+  static const String barcode = 'barcode';
 }

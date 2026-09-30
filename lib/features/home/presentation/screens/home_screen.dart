@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_app_bar_methoud.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_card_staus_list.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_drawer.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_order_card.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_pickup_card.dart';
+import 'package:futureexpressapp/features/home/presentation/widgets/home_shift_status_card.dart';
+
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/state/app_state.dart';
-import '../../../../core/theme.dart';
 import '../../../../core/widgets.dart';
-import '../../../shipments/domain/shipment.dart';
-import '../../../pickup/presentation/screens/pickup_screen.dart';
-import '../../../support/presentation/screens/support_screen.dart';
 
 /// Figma 11:23 — statistics derive from the live local shipment list.
 class HomeScreen extends StatelessWidget {
@@ -18,84 +21,22 @@ class HomeScreen extends StatelessWidget {
     final recent = state.shipments.first;
     final english = state.locale.languageCode == 'en';
     return Scaffold(
-      appBar: AppBar(title: Text(tr(context, AppLocaleKey.home)), actions: [IconButton(
-        tooltip: tr(context, AppLocaleKey.help), icon: const Icon(Icons.headset_mic_outlined),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen())))]),
+      drawer: HomeDrawer(state: state),
+      appBar: buildHomeAppBar(context),
       body: PageBody(children: [
-        Text(tr(context, AppLocaleKey.welcome), style: const TextStyle(color: AppColors.muted)),
+        Text(tr(context, AppLocaleKey.welcome), style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 15),
-        SurfaceCard(color: AppColors.navy, child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [const Icon(Icons.local_shipping_outlined, color: Colors.white),
-            const SizedBox(width: 9), Text(tr(context, AppLocaleKey.pickupTask),
-              style: const TextStyle(color: Colors.white70))]),
-          const SizedBox(height: 7),
-          Text(tr(context, AppLocaleKey.warehousePickup), style: const TextStyle(
-            fontSize: 19, fontWeight: FontWeight.w700, color: Colors.white)),
-          const SizedBox(height: 12),
-          ActionButton(label: tr(context, AppLocaleKey.startPickup), icon: Icons.qr_code_scanner,
-            onPressed: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const PickupScreen()))),
-        ])),
+        HomePickupCard(),
         const SizedBox(height: 19),
-        Row(children: [
-          Expanded(child: _Stat(label: tr(context, AppLocaleKey.todayShipments),
-            value: '${state.shipments.length}', icon: Icons.inventory_2_outlined, onTap: () => onTab(1))),
-          const SizedBox(width: 10),
-          Expanded(child: _Stat(label: tr(context, AppLocaleKey.delivered),
-            value: '${state.count(ShipmentStatus.delivered)}', icon: Icons.check_circle_outline,
-            onTap: () => onTab(1))),
-        ]),
-        const SizedBox(height: 10),
-        Row(children: [
-          Expanded(child: _Stat(label: tr(context, AppLocaleKey.inTransit),
-            value: '${state.count(ShipmentStatus.inTransit)}', icon: Icons.local_shipping_outlined,
-            onTap: () => onTab(1))),
-          const SizedBox(width: 10),
-          Expanded(child: _Stat(label: tr(context, AppLocaleKey.todayCollection),
-            value: '${state.totalCollected} \u20c1', icon: Icons.payments_outlined,
-            onTap: () => onTab(3))),
-        ]),
+        HomeCardStatusList(state: state, onTab: onTab),
         const SizedBox(height: 20),
-        SurfaceCard(child: Row(children: [
-          const Icon(Icons.power_settings_new, color: AppColors.red),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr(context, AppLocaleKey.shiftStatus), style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(tr(context, AppLocaleKey.shiftHint), style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-          ])),
-          Switch(value: state.onDuty, activeTrackColor: AppColors.green, onChanged: state.setDuty),
-        ])),
+        ShiftStatusCard(state: state),
         const SizedBox(height: 17),
-        SectionTitle(tr(context, AppLocaleKey.recentShipments), action: tr(context, AppLocaleKey.seeAll),
-          onAction: () => onTab(1)),
+        SectionTitle(tr(context, AppLocaleKey.recentShipments),
+            action: tr(context, AppLocaleKey.seeAll), onAction: () => onTab(1)),
         const SizedBox(height: 8),
-        SurfaceCard(child: Row(children: [
-          const Icon(Icons.inventory_2_outlined, color: AppColors.red),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('#${recent.id}', style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text('${english ? recent.customerEn : recent.customerAr} • ${english ? recent.addressEn : recent.addressAr}',
-              style: const TextStyle(color: AppColors.muted)),
-          ])),
-          const Icon(Icons.chevron_left),
-        ])),
+        HomeOrderCard(recent: recent, english: english),
       ]),
     );
   }
-}
-
-/// Single dashboard metric tile with its destination action.
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, required this.icon, required this.onTap});
-  final String label, value;
-  final IconData icon;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(18),
-    child: SurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Icon(icon, color: AppColors.red), const SizedBox(height: 12),
-      Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 3), Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-    ])));
 }

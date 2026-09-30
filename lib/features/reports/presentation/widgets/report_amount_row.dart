@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/widgets.dart';
 
 /// Currency row shared by the daily summary and its confirmation.
@@ -10,6 +11,15 @@ class ReportAmountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    children: [Text(label), const Spacer(), isCurrency ? Money(amount) : Text(amount, style: const TextStyle(fontWeight: FontWeight.w700))],
-  );
+        children: [
+          Text(label),
+          const Spacer(),
+          isCurrency
+              ? Money(
+                  amount,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                )
+              : Text(amount, style: Theme.of(context).textTheme.labelLarge)
+        ],
+      );
 }

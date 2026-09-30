@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -22,9 +20,9 @@ class DioConsumer implements ApiConsumer {
     if (kDebugMode && !client.interceptors.any((i) => i is PrettyDioLogger)) {
       client.interceptors.add(
         PrettyDioLogger(
-          requestHeader: true,
-          requestBody: true,
-          responseBody: true,
+          requestHeader: false,
+          requestBody: false,
+          responseBody: false,
           responseHeader: false,
           compact: false,
           error: true,
@@ -62,6 +60,11 @@ class DioConsumer implements ApiConsumer {
         extra: {"requiresAuth": requiresAuth, "showToast": showToast},
       ),
     );
+    if (kDebugMode) {
+      debugPrint(
+        'DIO -> GET response | path=$path | status=${response.statusCode}',
+      );
+    }
     return response.data;
   }
 
@@ -79,9 +82,8 @@ class DioConsumer implements ApiConsumer {
     final requestId = DateTime.now().microsecondsSinceEpoch.toString();
 
     debugPrint(
-      'DIO -> POST about to send | path=$path | requestId=$requestId | fp=$fp | body=${body ?? {}}',
+      'DIO -> POST about to send | path=$path | requestId=$requestId',
     );
-    log(headers.toString());
 
     if (_pendingRequests.containsKey(fp)) {
       debugPrint(
@@ -100,26 +102,24 @@ class DioConsumer implements ApiConsumer {
 
     final future = client
         .post(
-          path,
-          data: data,
-          queryParameters: queryParameters,
-          options: options,
-        )
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    )
         .then((response) {
-          debugPrint(
-            'DIO -> POST response | path=$path | requestId=$requestId | status=${response.statusCode}',
-          );
-          return response.data;
-        })
-        .catchError((e, st) {
-          debugPrint(
-            'DIO -> POST error | path=$path | requestId=$requestId | error=$e',
-          );
-          throw e;
-        })
-        .whenComplete(() {
-          _pendingRequests.remove(fp);
-        });
+      debugPrint(
+        'DIO -> POST response | path=$path | requestId=$requestId | status=${response.statusCode}',
+      );
+      return response.data;
+    }).catchError((e, st) {
+      debugPrint(
+        'DIO -> POST error | path=$path | requestId=$requestId | error=$e',
+      );
+      throw e;
+    }).whenComplete(() {
+      _pendingRequests.remove(fp);
+    });
 
     _pendingRequests[fp] = future;
     return await future;

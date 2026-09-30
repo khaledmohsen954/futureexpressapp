@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/features/auth/data/repositories/logout_repository.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/routes/routes_name.dart';
@@ -33,9 +35,11 @@ class HomeDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    tr(context, AppLocaleKey.courierName),
-                    style:
-                        Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.onDark),
+                    state.name ?? tr(context, AppLocaleKey.courierName),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: AppColors.onDark),
                   ),
                   Text(
                     tr(context, AppLocaleKey.courier),
@@ -48,7 +52,8 @@ class HomeDrawer extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.headset_mic_outlined, color: AppColors.red),
+              leading:
+                  const Icon(Icons.headset_mic_outlined, color: AppColors.red),
               title: Text(tr(context, AppLocaleKey.help)),
               onTap: () {
                 Navigator.pop(context);
@@ -70,7 +75,15 @@ class HomeDrawer extends StatelessWidget {
               title: Text(tr(context, AppLocaleKey.logout)),
               onTap: () {
                 Navigator.pop(context);
-                state.signOut();
+                state.signOut(sl<LogoutRepository>()).then((result) {
+                  if (!context.mounted) return;
+                  result.fold(
+                    (failure) => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(failure.errMessage)),
+                    ),
+                    (_) {},
+                  );
+                });
               },
             ),
           ],

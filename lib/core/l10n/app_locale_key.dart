@@ -6,17 +6,20 @@ abstract final class AppLocaleKey {
   static const String validateEmailStructure = 'validateEmailStructure';
   static const String validatePhone = 'validatePhone';
   static const String validatePhoneStartWithZero = 'validatePhoneStartWithZero';
-  static const String validatePhoneContainTenNumbers = 'validatePhoneContainTenNumbers';
+  static const String validatePhoneContainTenNumbers =
+      'validatePhoneContainTenNumbers';
   static const String validatePassword = 'validatePassword';
   static const String enterYourPassword = 'enterYourPassword';
   static const String validateConfirmPassword = 'validateConfirmPassword';
   static const String validateEmpty = 'validateEmpty';
-  static const String validateConfirmPasswordNotMatch = 'validateConfirmPasswordNotMatch';
+  static const String validateConfirmPasswordNotMatch =
+      'validateConfirmPasswordNotMatch';
   static const String youMustLoginToContinue = 'youMustLoginToContinue';
   static const String lognAsGuest = 'lognAsGuest';
   static const String login = 'login';
   static const String welcomeBack = 'welcomeBack';
-  static const String pleaseEnterYourMobileNumber = 'pleaseEnterYourMobileNumber';
+  static const String pleaseEnterYourMobileNumber =
+      'pleaseEnterYourMobileNumber';
   static const String pleaseEnterYourMobileNumberStartWith05 =
       'pleaseEnterYourMobileNumberStartWith05';
   static const String otp = 'otp';
@@ -30,7 +33,8 @@ abstract final class AppLocaleKey {
   static const String welcome = 'welcome';
   static const String companyName = 'companyName';
   static const String userName = 'userName';
-  static const String pleaseNotContainYourNameOrEmail = 'pleaseNotContainYourNameOrEmail';
+  static const String pleaseNotContainYourNameOrEmail =
+      'pleaseNotContainYourNameOrEmail';
   static const String atLeast8Characters = 'atLeast8Characters';
   static const String password = 'password';
   static const String confirmPassword = 'confirmPassword';
@@ -41,7 +45,8 @@ abstract final class AppLocaleKey {
       'pleaseEnterYourPhoneNumberStartWith05';
   static const String pleaseEnterYourPhoneNumber = 'pleaseEnterYourPhoneNumber';
   static const String passwordNotMatch = 'passwordNotMatch';
-  static const String pleaseEnterYourConfirmPassword = 'pleaseEnterYourConfirmPassword';
+  static const String pleaseEnterYourConfirmPassword =
+      'pleaseEnterYourConfirmPassword';
   static const String pleaseEnterYourPassword = 'pleaseEnterYourPassword';
   static const String userNameRequired = 'userNameRequired';
   static const String companyNameRequired = 'companyNameRequired';
@@ -88,6 +93,9 @@ abstract final class AppLocaleKey {
   static const String pendingTab = 'pendingTab';
   static const String completedTab = 'completedTab';
   static const String shipmentCount = 'shipmentCount';
+  static const String loadMore = 'loadMore';
+  static const String retry = 'retry';
+  static const String other = 'other';
   static const String noShipments = 'noShipments';
   static const String pending = 'pending';
   static const String amount = 'amount';
@@ -113,8 +121,12 @@ abstract final class AppLocaleKey {
   static const String notesHint = 'notesHint';
   static const String confirmSend = 'confirmSend';
   static const String reportSent = 'reportSent';
+  static const String reportSubmitFailed = 'reportSubmitFailed';
+  static const String sendingReport = 'sendingReport';
+  static const String reportClientIdMissing = 'reportClientIdMissing';
   static const String reportSaved = 'reportSaved';
   static const String currentBalance = 'currentBalance';
+  static const String balanceLoadFailed = 'balanceLoadFailed';
   static const String lastUpdated = 'lastUpdated';
   static const String dueAmounts = 'dueAmounts';
   static const String recentTransactions = 'recentTransactions';
@@ -157,14 +169,20 @@ abstract final class AppLocaleKey {
   static const String passwordHelp = 'passwordHelp';
   static const String markDelivered = 'markDelivered';
   static const String deliverySaved = 'deliverySaved';
+  static const String shipmentStatusUpdateFailed = 'shipmentStatusUpdateFailed';
+  static const String shipmentStatusLocationRequired =
+      'shipmentStatusLocationRequired';
   static const String alreadySent = 'alreadySent';
   static const String ok = 'ok';
   static const String locationPermission = 'locationPermission';
   static const String openSettings = 'openSettings';
-  static const String locationPermissionDescription = 'locationPermissionDescription';
+  static const String locationPermissionDescription =
+      'locationPermissionDescription';
   static const String locationServiceDisabled = 'locationServiceDisabled';
-  static const String locationServiceDisabledDescription = 'locationServiceDisabledDescription';
-  static const String locationRequiredForOrderImages = 'locationRequiredForOrderImages';
+  static const String locationServiceDisabledDescription =
+      'locationServiceDisabledDescription';
+  static const String locationRequiredForOrderImages =
+      'locationRequiredForOrderImages';
   static const String cancel = 'cancel';
   static const String tryAgain = 'tryAgain';
   static const String statusReceived = 'statusReceived';
@@ -185,8 +203,8 @@ abstract final class AppLocaleKey {
   static const String nationalLocation = 'nationalLocation';
   static const String openLocationOnMap = 'openLocationOnMap';
   static const String contactWithWhatsapp = 'contactWithWhatsapp';
-  static const String pleasePositionQrWithinFrame = 'pleasePositionQrWithinFrame';
-  static const String retry = 'retry';
+  static const String pleasePositionQrWithinFrame =
+      'pleasePositionQrWithinFrame';
   static const String qrCode = 'qrCode';
   static const String barcode = 'barcode';
 }

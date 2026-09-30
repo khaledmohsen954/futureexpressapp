@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:futureexpressapp/core/routes/app_routers_import.dart';
+import 'package:futureexpressapp/core/session/auth_session.dart';
 
 import 'core/state/app_state.dart';
 import 'core/theme.dart';
@@ -22,8 +23,16 @@ class FutureExpressApp extends StatefulWidget {
 
 class _FutureExpressAppState extends State<FutureExpressApp> {
   late final AppState state = widget.state;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthSession.onUnauthenticated = state.expireSession;
+  }
+
   @override
   void dispose() {
+    AuthSession.onUnauthenticated = null;
     state.dispose();
     super.dispose();
   }
@@ -38,6 +47,7 @@ class _FutureExpressAppState extends State<FutureExpressApp> {
           child: AnimatedBuilder(
             animation: state,
             builder: (context, _) => MaterialApp(
+              key: ValueKey(state.signedIn),
               title: 'Future Express',
               debugShowCheckedModeBanner: false,
               theme: appTheme(),

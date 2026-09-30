@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/features/auth/data/repositories/logout_repository.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/routes/routes_name.dart';
@@ -23,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
               backgroundColor: AppColors.paleRed,
               child: Icon(Icons.person, size: 38, color: AppColors.red)),
           const SizedBox(height: 12),
-          Text(tr(context, AppLocaleKey.courierName),
+          Text(state.name ?? tr(context, AppLocaleKey.courierName),
               style: Theme.of(context).textTheme.titleLarge),
           Text(tr(context, AppLocaleKey.courier),
               style: Theme.of(context).textTheme.bodySmall),
@@ -40,10 +42,12 @@ class ProfileScreen extends StatelessWidget {
               state.phone),
           const Divider(),
           _ProfileRow(Icons.mail_outline, tr(context, AppLocaleKey.email),
-              'ahmed@futureexpress.sa'),
+              state.email ?? 'ahmed@futureexpress.sa'),
           const Divider(),
-          _ProfileRow(Icons.location_on_outlined,
-              tr(context, AppLocaleKey.city), tr(context, AppLocaleKey.riyadh)),
+          _ProfileRow(
+              Icons.location_on_outlined,
+              tr(context, AppLocaleKey.city),
+              state.city ?? tr(context, AppLocaleKey.riyadh)),
         ])),
         const SizedBox(height: 19),
         SurfaceCard(
@@ -75,7 +79,16 @@ class ProfileScreen extends StatelessWidget {
             label: tr(context, AppLocaleKey.logout),
             icon: Icons.logout,
             outlined: true,
-            onPressed: state.signOut),
+            onPressed: () async {
+              final result = await state.signOut(sl<LogoutRepository>());
+              if (!context.mounted) return;
+              result.fold(
+                (failure) => ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(failure.errMessage)),
+                ),
+                (_) {},
+              );
+            }),
       ]),
     );
   }

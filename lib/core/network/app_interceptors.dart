@@ -1,8 +1,10 @@
-import 'dart:developer';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:futureexpressapp/core/cache/hive/hive_methods.dart';
+import 'package:futureexpressapp/core/session/auth_session.dart';
 
 import '../utils/common_methods.dart';
 
@@ -40,7 +42,8 @@ class AppInterceptors extends Interceptor {
     if (value is String) {
       return _convertArabicToEnglishNumbers(value);
     } else if (value is Map) {
-      return value.map((key, val) => MapEntry(key, _convertNumbersInValue(val)));
+      return value
+          .map((key, val) => MapEntry(key, _convertNumbersInValue(val)));
     } else if (value is List) {
       return value.map((item) => _convertNumbersInValue(item)).toList();
     }
@@ -49,7 +52,8 @@ class AppInterceptors extends Interceptor {
   }
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
     isInternet = true;
     debugPrint('REQUEST[${options.method}] => PATH: ${options.path}');
 
@@ -67,7 +71,11 @@ class AppInterceptors extends Interceptor {
 
     try {
       // default headers
-      options.headers['Content-Type'] = 'application/json';
+      if (options.data is FormData) {
+        options.headers.remove('Content-Type');
+      } else {
+        options.headers['Content-Type'] = 'application/json';
+      }
       options.headers['Accept'] = 'application/json';
       options.headers['x-api-key'] = 'reqres-free-v1';
       options.headers['Accept-Language'] = HiveMethods.getLang();
@@ -78,6 +86,14 @@ class AppInterceptors extends Interceptor {
       if (useAuth && token != null && token.isNotEmpty) {
         // only add if not already present
         options.headers['Authorization'] ??= "Bearer $token";
+      }
+
+      if (useAuth && token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+
+      if (useAuth && token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
       }
 
       // network check
@@ -96,13 +112,26 @@ class AppInterceptors extends Interceptor {
   }
 
   @override
-  void onResponse(Response response, ResponseInterceptorHandler handler, {bool showToast = true}) {
-    debugPrint('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+  void onResponse(Response response, ResponseInterceptorHandler handler,
+      {bool showToast = true}) {
+    debugPrint(
+        'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+
+    if (_requiresAuthentication(response.statusCode, response.data)) {
+      unawaited(AuthSession.expire());
+    }
 
     try {
+      if (kDebugMode) {
+        debugPrint(
+          'RESPONSE BODY:\n${const JsonEncoder.withIndent('  ').convert(_redactSensitiveData(response.data))}',
+        );
+      }
+
       // التحكم: افتراضياً لا نعرض toast على GET، ويمكن تجاوز السلوك بواسطة extra
       final isGet = response.requestOptions.method.toUpperCase() == 'GET';
-      final showToast = response.requestOptions.extra['showToast'] as bool? ?? true;
+      final showToast =
+          response.requestOptions.extra['showToast'] as bool? ?? true;
 
       if (response.statusCode == 200 && !isGet && showToast) {
         final data = response.data;
@@ -130,12 +159,6 @@ class AppInterceptors extends Interceptor {
           CommonMethods.showToast(message: toastMessage);
         }
       }
-
-      if (response.statusCode == 401) {
-        log("automatic navigation for login screen");
-
-        // Clear token and navigate to login
-      }
     } catch (e, st) {
       debugPrint('AppInterceptors.onResponse parsing error: $e\n$st');
       // لا توقف الـ flow — استمر ومرّر الاستجابة
@@ -144,11 +167,51 @@ class AppInterceptors extends Interceptor {
     }
   }
 
+  dynamic _redactSensitiveData(dynamic value) {
+    if (value is Map) {
+      return value.map((key, item) {
+        final normalizedKey = key.toString().toLowerCase();
+        final isSensitive = normalizedKey.contains('token') ||
+            normalizedKey.contains('password') ||
+            normalizedKey.contains('secret');
+        return MapEntry(
+          key.toString(),
+          isSensitive ? '[REDACTED]' : _redactSensitiveData(item),
+        );
+      });
+    }
+    if (value is List) {
+      return value.map(_redactSensitiveData).toList();
+    }
+    return value;
+  }
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     debugPrint(
       'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path} message: ${err.message}',
     );
+    if (_requiresAuthentication(err.response?.statusCode, err.response?.data)) {
+      unawaited(AuthSession.expire());
+    }
     handler.next(err);
+  }
+
+  bool _requiresAuthentication(int? statusCode, dynamic responseData) {
+    if (statusCode == 401) return true;
+
+    dynamic data = responseData;
+    if (data is String) {
+      try {
+        data = jsonDecode(data);
+      } on FormatException {
+        return false;
+      }
+    }
+    if (data is! Map) return false;
+    final message = data['message'];
+    return message is String &&
+        message.trim().replaceAll(RegExp(r'\.+$'), '').toLowerCase() ==
+            'unauthenticated';
   }
 }

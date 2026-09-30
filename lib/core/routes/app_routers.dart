@@ -15,31 +15,52 @@ class AppRouters {
           builder: (_) => const PickupScreen(),
         );
       case RoutesName.sendReportScreen:
+        final report = settings.arguments;
+        if (report is! DailyReport) {
+          throw FlutterError(
+            'The ${RoutesName.sendReportScreen} route requires a DailyReport.',
+          );
+        }
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const SendReportScreen(),
+          builder: (_) => BlocProvider(
+            create: (_) => DailyReportCubit(
+              repository: sl<DailyReportRepository>(),
+            )..setSummary(report),
+            child: const SendReportScreen(),
+          ),
         );
       case RoutesName.deliveryFailureScreen:
-        final shipmentId = settings.arguments;
-        if (shipmentId is! String) {
+        final shipment = settings.arguments;
+        if (shipment is! Shipment) {
           throw FlutterError(
-            'The ${RoutesName.deliveryFailureScreen} route requires a String shipment ID.',
+            'The ${RoutesName.deliveryFailureScreen} route requires a Shipment.',
           );
         }
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => DeliveryFailureScreen(shipmentId: shipmentId),
+          builder: (_) => BlocProvider(
+            create: (_) => ShipmentStatusCubit(
+              repository: sl<ShipmentsRepository>(),
+            ),
+            child: DeliveryFailureScreen(shipment: shipment),
+          ),
         );
       case RoutesName.shipmentDetailsScreen:
-        final shipmentId = settings.arguments;
-        if (shipmentId is! String) {
+        final shipment = settings.arguments;
+        if (shipment is! Shipment) {
           throw FlutterError(
-            'The ${RoutesName.shipmentDetailsScreen} route requires a String shipment ID.',
+            'The ${RoutesName.shipmentDetailsScreen} route requires a Shipment.',
           );
         }
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => ShipmentDetailsScreen(),
+          builder: (_) => BlocProvider(
+            create: (_) => ShipmentStatusCubit(
+              repository: sl<ShipmentsRepository>(),
+            ),
+            child: ShipmentDetailsScreen(shipment: shipment),
+          ),
         );
       default:
         return null;

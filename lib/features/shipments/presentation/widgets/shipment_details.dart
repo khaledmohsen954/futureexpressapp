@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes_name.dart';
 import '../../../../core/utils/navigator_methods.dart';
 import '../../../../core/l10n/app_strings.dart';
@@ -6,6 +7,7 @@ import '../../../../core/state/app_state.dart';
 import '../../../../core/theme.dart';
 import '../../../../core/widgets.dart';
 import '../../domain/shipment.dart';
+import '../cubit/shipments_cubit.dart';
 
 /// Figma 11:184 — local delivery and failure actions for expanded shipments.
 class ShipmentDetails extends StatelessWidget {
@@ -34,10 +36,15 @@ class ShipmentDetails extends StatelessWidget {
               icon: Icons.check_circle_outline,
               color: AppColors.green,
               onPressed: () {
-                if (AppScope.of(context).deliver(shipment.id)) {
-                  showLocalMessage(
-                      context, tr(context, AppLocaleKey.deliverySaved));
-                }
+                NavigatorMethods.pushNamed(
+                  context,
+                  RoutesName.shipmentDetailsScreen,
+                  arguments: shipment,
+                ).then((updated) {
+                  if (updated == true && context.mounted) {
+                    context.read<ShipmentsCubit>().loadFirstPage();
+                  }
+                });
               }),
         ],
         if (shipment.status == ShipmentStatus.inTransit ||
@@ -47,18 +54,22 @@ class ShipmentDetails extends StatelessWidget {
             label: tr(context, AppLocaleKey.deliveryFailure),
             icon: Icons.report_problem_outlined,
             outlined: true,
-            onPressed: () => NavigatorMethods.pushNamed(
-              context,
-              RoutesName.deliveryFailureScreen,
-              arguments: shipment.id,
-            ),
+            onPressed: () {
+              NavigatorMethods.pushNamed(
+                context,
+                RoutesName.deliveryFailureScreen,
+                arguments: shipment,
+              ).then((updated) {
+                if (updated == true && context.mounted) {
+                  context.read<ShipmentsCubit>().loadFirstPage();
+                }
+              });
+            },
           ),
         ],
         if (AppScope.of(context).failureReasons.containsKey(shipment.id))
           Text(
-              tr(context, AppScope.of(context).failureReasons[shipment.id]!) +
-                  ' ' +
-                  (AppScope.of(context).failureNotes[shipment.id] ?? ''),
+              '${tr(context, AppScope.of(context).failureReasons[shipment.id]!)} ${AppScope.of(context).failureNotes[shipment.id] ?? ''}',
               style: Theme.of(context).textTheme.bodySmall),
       ]);
 }

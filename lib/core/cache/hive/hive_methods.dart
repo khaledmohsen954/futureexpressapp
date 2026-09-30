@@ -17,7 +17,8 @@ class HiveMethods {
 
   static Future<void> checkVersionAndClearCache() async {
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final String currentVersion = "${packageInfo.version}+${packageInfo.buildNumber}";
+    final String currentVersion =
+        "${packageInfo.version}+${packageInfo.buildNumber}";
     final String? savedVersion = _box.get('app_version');
 
     if (savedVersion != null && savedVersion != currentVersion) {
@@ -53,15 +54,46 @@ class HiveMethods {
   }
 
   static String? getToken() {
-    return _box.get('token');
+    if (!Hive.isBoxOpen('app')) return null;
+    return _box.get('api_token') as String? ?? _box.get('token') as String?;
   }
 
-  static void updateToken(String token) {
-    _box.put('token', token);
+  static Future<void> updateToken(String token) {
+    return _box.put('api_token', token);
   }
 
-  static void deleteToken() {
-    _box.delete('token');
+  static Future<void> deleteToken() async {
+    await _box.delete('api_token');
+    await _box.delete('token');
+  }
+
+  static Map<String, dynamic>? getUserData() {
+    if (!Hive.isBoxOpen('app')) return null;
+    final data = _box.get('user_data');
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return null;
+  }
+
+  static Future<void> updateUserData(Map<String, dynamic> userData) {
+    return _box.put('user_data', userData);
+  }
+
+  static Future<void> deleteUserData() {
+    return _box.delete('user_data');
+  }
+
+  static bool? getShiftStatus() {
+    if (!Hive.isBoxOpen('app') || !_box.containsKey('shift_status')) {
+      return null;
+    }
+    final value = _box.get('shift_status');
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    return null;
+  }
+
+  static Future<void> updateShiftStatus(bool onDuty) {
+    return _box.put('shift_status', onDuty ? 1 : 0);
   }
 
   static bool isFirstTime() {
@@ -77,7 +109,8 @@ class HiveMethods {
       return _box.get('theme');
     }
     // Default to system theme
-    final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final brightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
     return brightness == Brightness.dark ? ThemeEnum.dark : ThemeEnum.light;
   }
 

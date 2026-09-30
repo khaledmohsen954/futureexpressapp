@@ -4,10 +4,15 @@ import 'package:futureexpressapp/core/theme.dart';
 import 'package:futureexpressapp/core/theme/app_text_style.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
+import '../../domain/shipment.dart';
+
 class ShipmentQRCad extends StatelessWidget {
   const ShipmentQRCad({
     super.key,
+    required this.shipment,
   });
+
+  final Shipment shipment;
 
   @override
   Widget build(BuildContext context) {
@@ -27,22 +32,33 @@ class ShipmentQRCad extends StatelessWidget {
               children: [
                 Text(
                   tr(context, AppLocaleKey.responsibleCarrier),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelMedium
+                      ?.copyWith(color: AppColors.white),
                 ),
                 Text(
                   "Future Express",
                   style: AppTextStyle.textR12B(context),
                 ),
                 Text(
-                  tr(context, "إسم المتجر - إسم المنتج"),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  shipment.store ??
+                      shipment.orderContents ??
+                      tr(context, "إسم المتجر - إسم المنتج"),
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelMedium
+                      ?.copyWith(color: AppColors.white),
                 ),
                 SizedBox(
                   height: 5,
                 ),
                 Text(
                   "${tr(context, AppLocaleKey.assignTime)} : 10:00 AM ",
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelMedium
+                      ?.copyWith(color: AppColors.white),
                 ),
               ],
             ),
@@ -63,12 +79,16 @@ class ShipmentQRCad extends StatelessWidget {
                   padding: const EdgeInsets.all(5.0),
                   child: Text(
                     tr(context, AppLocaleKey.fullyPaidOnline),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.white),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: AppColors.white),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 child: Container(
                   padding: EdgeInsets.only(
                     top: 10,
@@ -86,7 +106,7 @@ class ShipmentQRCad extends StatelessWidget {
                         height: 55,
                         width: 50,
                         child: PrettyQrView.data(
-                          data: "165135",
+                          data: shipment.orderId ?? shipment.id,
                           decoration: PrettyQrDecoration(
                             shape: PrettyQrSquaresSymbol(
                               color: AppColors.navy,
@@ -97,9 +117,11 @@ class ShipmentQRCad extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        "#165135",
-                        style:
-                            Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.navy),
+                        "#${shipment.orderId ?? shipment.id}",
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: AppColors.navy),
                       ),
                     ],
                   ),

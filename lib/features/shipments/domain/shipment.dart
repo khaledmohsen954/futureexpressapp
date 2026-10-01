@@ -85,7 +85,12 @@ extension ShipmentStatusApi on ShipmentStatus {
   static const int statusReceived = 329;
   static const int statusInTransit = 17;
   static const int statusDelivered = 220;
-  static const int statusDeliveryFailed = 10;
+  static const int statusDeliveryFailed = 34;
+  static const Set<int> supportedStatusIds = {
+    statusInTransit,
+    statusDelivered,
+    statusDeliveryFailed,
+  };
 
   int get apiId => switch (this) {
         ShipmentStatus.pending => statusReceived,

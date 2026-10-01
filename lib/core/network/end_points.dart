@@ -10,6 +10,7 @@ class EndPoints {
   static const String v3Login = 'https://future-ex.com/api/v3/login';
   static const String v3Logout = 'https://future-ex.com/api/v3/logout';
   static const String v3Orders = 'https://future-ex.com/api/v3/orders';
+  static const String v3Statuses = 'https://future-ex.com/api/v3/statuses';
   static const String v3ScanAndAssign =
       'https://future-ex.com/api/v3/orders/scan-and-assign';
   static const String v3DailyReport =

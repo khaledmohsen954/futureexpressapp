@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/features/shipments/data/models/shipment_status_filter.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments_cubit.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_list.dart';
@@ -21,21 +22,26 @@ class ShipmentsScreen extends StatefulWidget {
 }
 
 class _ShipmentsScreenState extends State<ShipmentsScreen> {
-  int selectedFilter = 0;
   String search = '';
-  final filterKeys = List<GlobalKey>.generate(5, (_) => GlobalKey());
-  static const filterStatusIds = <int?>[
-    null,
-    ShipmentStatusApi.statusReceived,
+  int selectedTabIndex = 0;
+  int? selectedStatusFilterId;
+  final tabKeys = List<GlobalKey>.generate(3, (_) => GlobalKey());
+
+  static const _tabStatusIds = <int>[
     ShipmentStatusApi.statusInTransit,
     ShipmentStatusApi.statusDelivered,
     ShipmentStatusApi.statusDeliveryFailed,
   ];
+  static const _tabLabels = <String>[
+    AppLocaleKey.statusInTransit,
+    AppLocaleKey.statusDelivered,
+    AppLocaleKey.statusDeliveryFailed,
+  ];
 
-  void _selectFilter(int index) {
-    setState(() => selectedFilter = index);
+  void _selectTab(int index) {
+    setState(() => selectedTabIndex = index);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final filterContext = filterKeys[index].currentContext;
+      final filterContext = tabKeys[index].currentContext;
       if (filterContext != null) {
         Scrollable.ensureVisible(
           filterContext,
@@ -47,41 +53,121 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
     });
   }
 
+  Future<void> _showStatusFilter(
+    BuildContext context,
+    List<ShipmentStatusFilter> statuses,
+  ) async {
+    final cubit = context.read<ShipmentsCubit>();
+    final supportedStatuses = statuses
+        .where((status) =>
+            ShipmentStatusApi.supportedStatusIds.contains(status.id))
+        .toList(growable: false);
+    final selection = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        tr(sheetContext, AppLocaleKey.filterStatus),
+                        style: Theme.of(sheetContext).textTheme.titleLarge,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(sheetContext, 0),
+                      child: Text(
+                        tr(sheetContext, AppLocaleKey.clearStatusFilter),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: supportedStatuses.length,
+                  itemBuilder: (context, index) {
+                    final status = supportedStatuses[index];
+                    final selected = status.id == selectedStatusFilterId;
+                    return ListTile(
+                      leading: Icon(
+                        selected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                        color: selected ? AppColors.red : AppColors.muted,
+                      ),
+                      title: Row(
+                        children: [
+                          Text(status.id.toString()),
+                          Text(status.localizedTitle(
+                              Localizations.localeOf(context).languageCode)),
+                        ],
+                      ),
+                      selected: selected,
+                      onTap: () => Navigator.pop(sheetContext, status.id),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || selection == null) return;
+    final statusId = selection == 0 ? null : selection;
+    setState(() => selectedStatusFilterId = statusId);
+    cubit.setStatusFilter(statusId);
+  }
+
+  void _clearStatusFilter(BuildContext context) {
+    setState(() => selectedStatusFilterId = null);
+    context.read<ShipmentsCubit>().setStatusFilter(null);
+  }
+
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => ShipmentsCubit(
           repository: widget.repository ?? sl<ShipmentsRepository>(),
-        )..loadFirstPage(),
+        )
+          ..loadStatuses()
+          ..loadFirstPage(),
         child: Builder(builder: _buildContent),
       );
 
   Widget _buildContent(BuildContext context) {
-    const filterLabels = [
-      AppLocaleKey.all,
-      AppLocaleKey.statusReceived,
-      AppLocaleKey.statusInTransit,
-      AppLocaleKey.statusDelivered,
-      AppLocaleKey.statusDeliveryFailed,
-    ];
-    final shipmentsState = context.watch<ShipmentsCubit>().state;
-    final selectedStatusId = filterStatusIds[selectedFilter];
+    final cubit = context.watch<ShipmentsCubit>();
+    final shipmentsState = cubit.state;
+    final selectedStatuses = shipmentsState.availableStatuses
+        .where((status) =>
+            status.id == selectedStatusFilterId &&
+            ShipmentStatusApi.supportedStatusIds.contains(status.id))
+        .toList(growable: false);
+    final selectedStatus =
+        selectedStatuses.isEmpty ? null : selectedStatuses.first;
+    final tabStatusId = _tabStatusIds[selectedTabIndex];
     final filtered = shipmentsState.shipments.where((shipment) {
-      final matchesStatus =
-          selectedStatusId == null || shipment.apiStatusId == selectedStatusId;
+      final matchesSupportedStatus =
+          ShipmentStatusApi.supportedStatusIds.contains(shipment.apiStatusId);
+      final matchesTab = shipment.apiStatusId == tabStatusId;
       final searchFields =
           '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
                   '${shipment.customerAr} ${shipment.customerEn} '
                   '${shipment.addressAr} ${shipment.addressEn} '
                   '${shipment.customerPhone}'
               .toLowerCase();
-      return matchesStatus && searchFields.contains(search.toLowerCase());
+      return matchesSupportedStatus &&
+          matchesTab &&
+          searchFields.contains(search.toLowerCase());
     }).toList();
-    if (selectedStatusId == null) {
-      filtered.sort(
-        (a, b) => (a.apiStatusId ?? a.status.apiId)
-            .compareTo(b.apiStatusId ?? b.status.apiId),
-      );
-    }
     final visible = filtered;
 
     return Scaffold(
@@ -95,37 +181,71 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
           return false;
         },
         child: PageBody(children: [
-          TextField(
-              onChanged: (value) => setState(() => search = value.trim()),
-              decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: tr(context, AppLocaleKey.searchShipments))),
+          if (shipmentsState.areStatusesLoading)
+            const LinearProgressIndicator(),
+          if (shipmentsState.statusesError != null)
+            Row(
+              children: [
+                Expanded(child: Text(shipmentsState.statusesError!)),
+                TextButton(
+                  onPressed: cubit.retryStatuses,
+                  child: Text(tr(context, AppLocaleKey.retry)),
+                ),
+              ],
+            ),
+          if (shipmentsState.availableStatuses.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _showStatusFilter(
+                    context,
+                    shipmentsState.availableStatuses,
+                  ),
+                  icon: const Icon(Icons.filter_list),
+                  label: Text(tr(context, AppLocaleKey.filterStatus)),
+                ),
+                if (selectedStatus != null)
+                  InputChip(
+                    label: Text(selectedStatus.localizedTitle(
+                        Localizations.localeOf(context).languageCode)),
+                    onDeleted: () => _clearStatusFilter(context),
+                  ),
+              ],
+            ),
           const SizedBox(height: 14),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: List.generate(
-                filterLabels.length,
-                (index) => Padding(
-                  key: filterKeys[index],
+              children: List.generate(_tabLabels.length, (index) {
+                final selected = selectedTabIndex == index;
+                return Padding(
+                  key: tabKeys[index],
                   padding: const EdgeInsetsDirectional.only(end: 7),
                   child: ChoiceChip(
-                    label: Text(tr(context, filterLabels[index])),
-                    selected: selectedFilter == index,
+                    label: Text(tr(context, _tabLabels[index])),
+                    selected: selected,
                     selectedColor: AppColors.navy,
                     labelStyle: Theme.of(context)
                         .textTheme
                         .labelLarge
                         ?.copyWith(
-                            color: selectedFilter == index
-                                ? AppColors.onDark
-                                : AppColors.navy),
-                    onSelected: (_) => _selectFilter(index),
+                          color: selected ? AppColors.onDark : AppColors.navy,
+                        ),
+                    onSelected: (_) => _selectTab(index),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
           ),
+          const SizedBox(height: 14),
+          TextField(
+              onChanged: (value) => setState(() => search = value.trim()),
+              decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: tr(context, AppLocaleKey.searchShipments))),
           const SizedBox(height: 10),
           if (shipmentsState.status == ShipmentsStatus.loading)
             const Center(child: CircularProgressIndicator())

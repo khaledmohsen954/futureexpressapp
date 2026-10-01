@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:futureexpressapp/core/network/end_points.dart';
 import 'package:futureexpressapp/core/state/app_state.dart';
 import 'package:futureexpressapp/core/storage/local_preview_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/screens/shipments_screen.dart';
@@ -16,7 +17,7 @@ class _MemoryRepository implements LocalPreviewRepository {
 }
 
 void main() {
-  testWidgets('shipment status filters render and filter the list',
+  testWidgets('only supported API statuses are shown and filtered',
       (tester) async {
     final state = AppState(repository: _MemoryRepository())
       ..locale = const Locale('en', 'US');
@@ -36,35 +37,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('All'), findsOneWidget);
-    expect(find.text('4 shipments'), findsOneWidget);
+    expect(find.text('All'), findsNothing);
+    expect(find.text('Filter by status'), findsOneWidget);
+    expect(find.text('1 shipments'), findsOneWidget);
+    expect(shipmentsApi.requestedPaths, contains(EndPoints.v3Statuses));
+    final statusesRequestIndex =
+        shipmentsApi.requestedPaths.indexOf(EndPoints.v3Statuses);
+    expect(shipmentsApi.requestedAuth[statusesRequestIndex], isTrue);
     expect(find.text('#FX-2048'), findsOneWidget);
-    expect(find.text('#FX-2050'), findsOneWidget);
-    final allStatusIds = tester
+    expect(find.text('#FX-2049'), findsNothing);
+    expect(find.text('#FX-2050'), findsNothing);
+    final visibleStatusIds = tester
         .widgetList<ShipmentCard>(find.byType(ShipmentCard))
         .map((card) => card.shipment.apiStatusId)
         .toList();
-    expect(allStatusIds, [17, 220, 329, 329]);
+    expect(visibleStatusIds, [17]);
 
-    await tester.tap(find.text('Received'));
+    await tester.tap(find.text('Filter by status'));
+    await tester.pumpAndSettle();
+    expect(find.text('Received from the branch'), findsNothing);
+    expect(find.text('New Order'), findsNothing);
+    expect(find.text('Out of Dlivery'), findsOneWidget);
+    expect(find.text('Delivered'), findsWidgets);
+    expect(find.text('Delivery Failed'), findsOneWidget);
+    await tester.tap(find.text('Delivered').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('2 shipments'), findsOneWidget);
-
-    expect(tester.takeException(), isNull);
-    expect(find.text('2 shipments'), findsOneWidget);
-    expect(find.text('#FX-2049'), findsOneWidget);
-    expect(find.text('#FX-2050'), findsNothing);
-
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(-500, 0),
+    expect(
+      shipmentsApi.requestedQueries.last,
+      {'status_id': 220},
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delivery failed'));
-    await tester.pumpAndSettle();
+    expect(find.text('0 shipments'), findsOneWidget);
 
     expect(tester.takeException(), isNull);
     expect(find.text('0 shipments'), findsOneWidget);
+    expect(find.text('#FX-2050'), findsNothing);
+    expect(find.text('#FX-2048'), findsNothing);
+
+    await tester.tap(find.byType(ChoiceChip).at(1));
+    await tester.pumpAndSettle();
+    expect(find.text('1 shipments'), findsOneWidget);
+    expect(find.text('#FX-2050'), findsOneWidget);
+
+    final selectedStatusChip = tester.widget<InputChip>(find.byType(InputChip));
+    selectedStatusChip.onDeleted!();
+    await tester.pumpAndSettle();
+    expect(shipmentsApi.requestedQueries.last, isNull);
+    expect(find.text('1 shipments'), findsOneWidget);
   });
 }

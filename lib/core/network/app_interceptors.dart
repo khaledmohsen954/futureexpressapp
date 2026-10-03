@@ -55,7 +55,6 @@ class AppInterceptors extends Interceptor {
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     isInternet = true;
-    debugPrint('REQUEST[${options.method}] => PATH: ${options.path}');
 
     // Convert Arabic numerals to English in request data
     if (options.data != null) {

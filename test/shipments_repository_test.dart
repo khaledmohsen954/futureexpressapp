@@ -7,8 +7,39 @@ import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments
 import 'helpers/fake_shipments_api.dart';
 
 void main() {
-  test('sends shipment status update to scan-and-assign as form fields',
-      () async {
+  test('fetches and parses authenticated API shipment statuses', () async {
+    final api = createTestShipmentsApi();
+
+    final result = await api.createRepository().getStatuses();
+
+    expect(api.requestedPaths, [EndPoints.v3Statuses]);
+    expect(api.requestedAuth, [true]);
+    result.fold(
+      (_) => fail('Expected statuses to load.'),
+      (statuses) {
+        expect(statuses, hasLength(7));
+        expect(statuses.first.id, 35);
+        expect(statuses.first.title, 'New Order');
+        expect(statuses.first.localizedTitle('ar'), 'طلب جديد');
+        expect(statuses[1].localizedTitle('en'), 'Received from the branch');
+      },
+    );
+  });
+
+  test('requests orders with status_id and page query parameters', () async {
+    final api = createTestShipmentsApi();
+
+    final result =
+        await api.createRepository().getShipments(page: 2, statusId: 17);
+
+    expect(result.isRight(), isTrue);
+    expect(api.requestedPaths, [EndPoints.v3Orders]);
+    expect(api.requestedQueries, [
+      {'page': 2, 'status_id': 17},
+    ]);
+  });
+
+  test('sends numeric database order IDs to scan-and-assign', () async {
     final api = FakeShipmentsApiConsumer(
       const {},
       postResponse: {
@@ -20,7 +51,7 @@ void main() {
     final repository = api.createRepository();
 
     final result = await repository.updateShipmentStatus(
-      orderIds: ['OR0008300'],
+      orderIds: ['8300'],
       statusId: 220,
       latitude: 24.7136,
       longitude: 46.6753,
@@ -41,7 +72,7 @@ void main() {
       },
     );
     expect(api.postedBody, {
-      'order_id[0]': 'OR0008300',
+      'order_id[0]': 8300,
       'status_id': 220,
       'latitude': 24.7136,
       'longitude': 46.6753,
@@ -56,7 +87,7 @@ void main() {
     );
 
     final result = await api.createRepository().updateShipmentStatus(
-      orderIds: ['OR0008300', 'OR0008301'],
+      orderIds: ['8300', '8301'],
       statusId: 220,
       latitude: 24.7136,
       longitude: 46.6753,
@@ -65,8 +96,8 @@ void main() {
 
     expect(result.isRight(), isTrue);
     expect(api.postedBody, {
-      'order_id[0]': 'OR0008300',
-      'order_id[1]': 'OR0008301',
+      'order_id[0]': 8300,
+      'order_id[1]': 8301,
       'status_id': 220,
       'latitude': 24.7136,
       'longitude': 46.6753,
@@ -82,7 +113,7 @@ void main() {
     );
 
     final result = await api.createRepository().updateShipmentStatus(
-      orderIds: ['OR0008300'],
+      orderIds: ['8300'],
       statusId: 220,
       latitude: 24.7136,
       longitude: 46.6753,
@@ -94,6 +125,25 @@ void main() {
       (failure) => expect(failure.errMessage, 'Invalid order status'),
       (_) => fail('Expected the API rejection to be returned as a failure.'),
     );
+  });
+
+  test('rejects tracking numbers instead of sending a nonnumeric order ID',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api.createRepository().updateShipmentStatus(
+      orderIds: ['OR0008300'],
+      statusId: 220,
+      latitude: 24.7136,
+      longitude: 46.6753,
+      notes: '',
+    );
+
+    expect(result.isLeft(), isTrue);
+    expect(api.postedPath, isNull);
   });
 
   test('maps all fields from the current orders API response', () {
@@ -150,17 +200,17 @@ void main() {
       () async {
     final api = FakeShipmentsApiConsumer({
       1: shipmentsResponse([
-        testOrder('received', 329),
+        testOrder('in-transit-first', 17),
         testOrder('in-transit', 17),
         testOrder('delivered', 220),
-        testOrder('failed', 10),
+        testOrder('failed', 34),
         {
-          ...testOrder('legacy', 329),
+          ...testOrder('legacy', 17),
           'status_id': null,
         },
       ], page: 1, lastPage: 2, total: 6),
       2: shipmentsResponse([
-        testOrder('later', 329),
+        testOrder('later-in-transit', 17),
       ], page: 2, lastPage: 2, total: 6),
     });
     final cubit = ShipmentsCubit(repository: api.createRepository());
@@ -171,7 +221,7 @@ void main() {
     expect(cubit.state.page, 1);
     expect(cubit.state.hasNextPage, isTrue);
     expect(cubit.state.shipments.map((shipment) => shipment.status), [
-      ShipmentStatus.pending,
+      ShipmentStatus.inTransit,
       ShipmentStatus.inTransit,
       ShipmentStatus.delivered,
       ShipmentStatus.failed,
@@ -184,7 +234,37 @@ void main() {
     expect(cubit.state.page, 2);
     expect(cubit.state.hasNextPage, isFalse);
     expect(cubit.state.shipments, hasLength(6));
-    expect(cubit.state.shipments.last.status, ShipmentStatus.pending);
+    expect(cubit.state.shipments.last.status, ShipmentStatus.inTransit);
+  });
+
+  test('keeps the selected status filter on first and later page requests',
+      () async {
+    final api = FakeShipmentsApiConsumer({
+      1: shipmentsResponse([
+        testOrder('in-transit', 17),
+        testOrder('delivered', 220),
+      ], page: 1, lastPage: 2, total: 3),
+      2: shipmentsResponse([
+        testOrder('later-in-transit', 17),
+      ], page: 2, lastPage: 2, total: 3),
+    });
+    final cubit = ShipmentsCubit(repository: api.createRepository());
+    addTearDown(cubit.close);
+
+    await cubit.setStatusFilter(17);
+    expect(
+        cubit.state.shipments.map((shipment) => shipment.id), ['in-transit']);
+
+    await cubit.loadNextPage();
+
+    expect(api.requestedQueries, [
+      {'status_id': 17},
+      {'page': 2, 'status_id': 17},
+    ]);
+    expect(
+      cubit.state.shipments.map((shipment) => shipment.id),
+      ['in-transit', 'later-in-transit'],
+    );
   });
 
   test('keeps every order and sorts unknown status IDs in All shipments',
@@ -194,7 +274,7 @@ void main() {
       (index) => {
         'id': 1000 + index,
         'order_id': 'ORD-$index',
-        'status_id': index % 4 == 0 ? 329 : 900 + index,
+        'status_id': index % 4 == 0 ? 17 : 900 + index,
         'order_status': 'Status $index',
         'client_name': 'Customer $index',
         'amount': '10.00',
@@ -210,7 +290,7 @@ void main() {
 
     expect(cubit.state.shipments, hasLength(34));
     expect(cubit.state.shipments.first.id, '1000');
-    expect(cubit.state.shipments.first.apiStatusId, 329);
+    expect(cubit.state.shipments.first.apiStatusId, 17);
     expect(cubit.state.shipments.last.apiStatusId, 933);
     expect(
       cubit.state.shipments.where(

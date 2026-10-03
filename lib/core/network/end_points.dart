@@ -8,11 +8,15 @@ class EndPoints {
   //?============================== auth endpoints =====================
 
   static const String v3Login = 'https://future-ex.com/api/v3/login';
+  static const String v3Profile = 'https://future-ex.com/api/v3/profile';
+  static const String v3ProfileUpdate =
+      'https://future-ex.com/api/v3/profile/update';
   static const String v3Logout = 'https://future-ex.com/api/v3/logout';
   static const String v3Orders = 'https://future-ex.com/api/v3/orders';
   static const String v3Statuses = 'https://future-ex.com/api/v3/statuses';
   static const String v3ScanAndAssign =
       'https://future-ex.com/api/v3/orders/scan-and-assign';
+  static const String v3ScanOrder = 'https://future-ex.com/api/v3/scan-order';
   static const String v3DailyReport =
       'https://future-ex.com/api/v3/daily-report';
   static const String v3SubmitDailyReport =

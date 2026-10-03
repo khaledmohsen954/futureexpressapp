@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bot_toast/bot_toast.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
@@ -5,13 +7,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:futureexpressapp/core/routes/app_routers_import.dart';
+import 'package:futureexpressapp/core/services/services_locator_imports.dart';
 import 'package:futureexpressapp/core/session/auth_session.dart';
 
+import 'core/l10n/app_strings.dart';
 import 'core/state/app_state.dart';
 import 'core/theme.dart';
 import 'core/theme/cubit/app_theme_cubit.dart';
+import 'core/utils/location_requirement.dart';
+import 'features/profile/presentation/screens/profile_splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/app_shell.dart';
+import 'features/profile/data/repositories/profile_repository.dart';
 
 /// Root widget wires state, locale, theme and the signed-in navigation shell.
 class FutureExpressApp extends StatefulWidget {
@@ -28,6 +35,9 @@ class _FutureExpressAppState extends State<FutureExpressApp> {
   void initState() {
     super.initState();
     AuthSession.onUnauthenticated = state.expireSession;
+    if (state.signedIn) {
+      unawaited(state.refreshProfile(sl<ProfileRepository>()));
+    }
   }
 
   @override
@@ -59,7 +69,18 @@ class _FutureExpressAppState extends State<FutureExpressApp> {
                 GlobalCupertinoLocalizations.delegate,
                 CountryLocalizations.delegate,
               ],
-              home: state.signedIn ? const AppShell() : const LoginScreen(),
+              home: !state.signedIn
+                  ? const LoginScreen()
+                  : state.isCheckingProfile
+                      ? const ProfileSplashScreen()
+                      : state.profileLoadError != null
+                          ? _ProfileLoadErrorScreen(
+                              message: state.profileLoadError!,
+                              onRetry: () => state.refreshProfile(
+                                sl<ProfileRepository>(),
+                              ),
+                            )
+                          : const _LocationStartupPrompt(child: AppShell()),
               onGenerateRoute: AppRouters.onGenerateRoute,
               navigatorKey: AppRouters.navigatorKey,
               builder: (context, child) => BotToastInit()(
@@ -67,6 +88,58 @@ class _FutureExpressAppState extends State<FutureExpressApp> {
                 AppScope(state: state, child: child!),
               ),
               navigatorObservers: [BotToastNavigatorObserver()],
+            ),
+          ),
+        ),
+      );
+}
+
+class _LocationStartupPrompt extends StatefulWidget {
+  const _LocationStartupPrompt({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_LocationStartupPrompt> createState() => _LocationStartupPromptState();
+}
+
+class _LocationStartupPromptState extends State<_LocationStartupPrompt> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) LocationRequirement.requestOnAppOpen(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+class _ProfileLoadErrorScreen extends StatelessWidget {
+  const _ProfileLoadErrorScreen({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(message, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(tr(context, AppLocaleKey.retry)),
+                ),
+              ],
             ),
           ),
         ),

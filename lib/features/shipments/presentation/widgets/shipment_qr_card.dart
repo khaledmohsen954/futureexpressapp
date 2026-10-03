@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:futureexpressapp/core/l10n/app_strings.dart';
 import 'package:futureexpressapp/core/theme.dart';
 import 'package:futureexpressapp/core/theme/app_text_style.dart';
+import 'package:futureexpressapp/core/widgets.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 import '../../domain/shipment.dart';
@@ -16,6 +17,8 @@ class ShipmentQRCad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final amount = double.tryParse(shipment.amountLabel ?? '') ??
+        shipment.amount.toDouble();
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -77,12 +80,39 @@ class ShipmentQRCad extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(5.0),
-                  child: Text(
-                    tr(context, AppLocaleKey.fullyPaidOnline),
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(color: AppColors.white),
+                  child: Row(
+                    children: [
+                      amount > 0
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 18.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    "${tr(context, AppLocaleKey.shipmentAmount)} : ",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                            color: AppColors.white, height: 2),
+                                  ),
+                                  Money(
+                                    amount,
+                                    color: AppColors.white,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Text(
+                              tr(context, AppLocaleKey.fullyPaidOnline),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(color: AppColors.white),
+                            ),
+                    ],
                   ),
                 ),
               ),

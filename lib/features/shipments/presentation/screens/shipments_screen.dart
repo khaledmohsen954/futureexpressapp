@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
-import 'package:futureexpressapp/features/shipments/data/models/shipment_status_filter.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments_cubit.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_list.dart';
@@ -53,92 +52,88 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
     });
   }
 
-  Future<void> _showStatusFilter(
-    BuildContext context,
-    List<ShipmentStatusFilter> statuses,
-  ) async {
-    final cubit = context.read<ShipmentsCubit>();
-    final supportedStatuses = statuses
-        .where((status) =>
-            ShipmentStatusApi.supportedStatusIds.contains(status.id))
-        .toList(growable: false);
-    final selection = await showModalBottomSheet<int>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        tr(sheetContext, AppLocaleKey.filterStatus),
-                        style: Theme.of(sheetContext).textTheme.titleLarge,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(sheetContext, 0),
-                      child: Text(
-                        tr(sheetContext, AppLocaleKey.clearStatusFilter),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: supportedStatuses.length,
-                  itemBuilder: (context, index) {
-                    final status = supportedStatuses[index];
-                    final selected = status.id == selectedStatusFilterId;
-                    return ListTile(
-                      leading: Icon(
-                        selected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_unchecked,
-                        color: selected ? AppColors.red : AppColors.muted,
-                      ),
-                      title: Row(
-                        children: [
-                          Text(status.id.toString()),
-                          Text(status.localizedTitle(
-                              Localizations.localeOf(context).languageCode)),
-                        ],
-                      ),
-                      selected: selected,
-                      onTap: () => Navigator.pop(sheetContext, status.id),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (!mounted || selection == null) return;
-    final statusId = selection == 0 ? null : selection;
-    setState(() => selectedStatusFilterId = statusId);
-    cubit.setStatusFilter(statusId);
-  }
+  // Future<void> _showStatusFilter(
+  //   BuildContext context,
+  //   List<ShipmentStatusFilter> statuses,
+  // ) async {
+  //   final cubit = context.read<ShipmentsCubit>();
+  //   final supportedStatuses = statuses
+  //       .where((status) => ShipmentStatusApi.supportedStatusIds.contains(status.id))
+  //       .toList(growable: false);
+  //   final selection = await showModalBottomSheet<int>(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (sheetContext) => SafeArea(
+  //       child: Padding(
+  //         padding: const EdgeInsets.only(top: 12, bottom: 12),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Padding(
+  //               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+  //               child: Row(
+  //                 children: [
+  //                   Expanded(
+  //                     child: Text(
+  //                       tr(sheetContext, AppLocaleKey.filterStatus),
+  //                       style: Theme.of(sheetContext).textTheme.titleLarge,
+  //                     ),
+  //                   ),
+  //                   TextButton(
+  //                     onPressed: () => Navigator.pop(sheetContext, 0),
+  //                     child: Text(
+  //                       tr(sheetContext, AppLocaleKey.clearStatusFilter),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             Flexible(
+  //               child: ListView.builder(
+  //                 shrinkWrap: true,
+  //                 itemCount: supportedStatuses.length,
+  //                 itemBuilder: (context, index) {
+  //                   final status = supportedStatuses[index];
+  //                   final selected = status.id == selectedStatusFilterId;
+  //                   return ListTile(
+  //                     leading: Icon(
+  //                       selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+  //                       color: selected ? AppColors.red : AppColors.muted,
+  //                     ),
+  //                     title: Row(
+  //                       children: [
+  //                         Text(status.id.toString()),
+  //                         Text(status.localizedTitle(Localizations.localeOf(context).languageCode)),
+  //                       ],
+  //                     ),
+  //                     selected: selected,
+  //                     onTap: () => Navigator.pop(sheetContext, status.id),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  //   if (!mounted || selection == null) return;
+  //   final statusId = selection == 0 ? null : selection;
+  //   setState(() => selectedStatusFilterId = statusId);
+  //   cubit.setStatusFilter(statusId);
+  // }
 
-  void _clearStatusFilter(BuildContext context) {
-    setState(() => selectedStatusFilterId = null);
-    context.read<ShipmentsCubit>().setStatusFilter(null);
-  }
+  // void _clearStatusFilter(BuildContext context) {
+  //   setState(() => selectedStatusFilterId = null);
+  //   context.read<ShipmentsCubit>().setStatusFilter(null);
+  // }
 
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => ShipmentsCubit(
           repository: widget.repository ?? sl<ShipmentsRepository>(),
         )
-          ..loadStatuses()
+          // ..loadStatuses()
           ..loadFirstPage(),
         child: Builder(builder: _buildContent),
       );
@@ -146,27 +141,23 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
   Widget _buildContent(BuildContext context) {
     final cubit = context.watch<ShipmentsCubit>();
     final shipmentsState = cubit.state;
-    final selectedStatuses = shipmentsState.availableStatuses
-        .where((status) =>
-            status.id == selectedStatusFilterId &&
-            ShipmentStatusApi.supportedStatusIds.contains(status.id))
-        .toList(growable: false);
-    final selectedStatus =
-        selectedStatuses.isEmpty ? null : selectedStatuses.first;
+    // final selectedStatuses = shipmentsState.availableStatuses
+    //     .where((status) =>
+    //         status.id == selectedStatusFilterId &&
+    //         ShipmentStatusApi.supportedStatusIds.contains(status.id))
+    //     .toList(growable: false);
+    // final selectedStatus = selectedStatuses.isEmpty ? null : selectedStatuses.first;
     final tabStatusId = _tabStatusIds[selectedTabIndex];
     final filtered = shipmentsState.shipments.where((shipment) {
       final matchesSupportedStatus =
           ShipmentStatusApi.supportedStatusIds.contains(shipment.apiStatusId);
       final matchesTab = shipment.apiStatusId == tabStatusId;
-      final searchFields =
-          '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
-                  '${shipment.customerAr} ${shipment.customerEn} '
-                  '${shipment.addressAr} ${shipment.addressEn} '
-                  '${shipment.customerPhone}'
-              .toLowerCase();
-      return matchesSupportedStatus &&
-          matchesTab &&
-          searchFields.contains(search.toLowerCase());
+      final searchFields = '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
+              '${shipment.customerAr} ${shipment.customerEn} '
+              '${shipment.addressAr} ${shipment.addressEn} '
+              '${shipment.customerPhone}'
+          .toLowerCase();
+      return matchesSupportedStatus && matchesTab && searchFields.contains(search.toLowerCase());
     }).toList();
     final visible = filtered;
 
@@ -174,15 +165,13 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
       appBar: AppBar(title: Text(tr(context, AppLocaleKey.shipments))),
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.depth == 0 &&
-              notification.metrics.extentAfter < 250) {
+          if (notification.depth == 0 && notification.metrics.extentAfter < 250) {
             context.read<ShipmentsCubit>().loadNextPage();
           }
           return false;
         },
         child: PageBody(children: [
-          if (shipmentsState.areStatusesLoading)
-            const LinearProgressIndicator(),
+          if (shipmentsState.areStatusesLoading) const LinearProgressIndicator(),
           if (shipmentsState.statusesError != null)
             Row(
               children: [
@@ -193,28 +182,28 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                 ),
               ],
             ),
-          if (shipmentsState.availableStatuses.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _showStatusFilter(
-                    context,
-                    shipmentsState.availableStatuses,
-                  ),
-                  icon: const Icon(Icons.filter_list),
-                  label: Text(tr(context, AppLocaleKey.filterStatus)),
-                ),
-                if (selectedStatus != null)
-                  InputChip(
-                    label: Text(selectedStatus.localizedTitle(
-                        Localizations.localeOf(context).languageCode)),
-                    onDeleted: () => _clearStatusFilter(context),
-                  ),
-              ],
-            ),
+          // if (shipmentsState.availableStatuses.isNotEmpty)
+          //   Wrap(
+          //     spacing: 8,
+          //     runSpacing: 8,
+          //     crossAxisAlignment: WrapCrossAlignment.center,
+          //     children: [
+          //       OutlinedButton.icon(
+          //         onPressed: () => _showStatusFilter(
+          //           context,
+          //           shipmentsState.availableStatuses,
+          //         ),
+          //         icon: const Icon(Icons.filter_list),
+          //         label: Text(tr(context, AppLocaleKey.filterStatus)),
+          //       ),
+          //       if (selectedStatus != null)
+          //         InputChip(
+          //           label: Text(selectedStatus.localizedTitle(
+          //               Localizations.localeOf(context).languageCode)),
+          //           onDeleted: () => _clearStatusFilter(context),
+          //         ),
+          //     ],
+          //   ),
           const SizedBox(height: 14),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -228,10 +217,7 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                     label: Text(tr(context, _tabLabels[index])),
                     selected: selected,
                     selectedColor: AppColors.navy,
-                    labelStyle: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(
+                    labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: selected ? AppColors.onDark : AppColors.navy,
                         ),
                     onSelected: (_) => _selectTab(index),
@@ -253,8 +239,7 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
             Center(
               child: Column(
                 children: [
-                  Text(shipmentsState.errorMessage ??
-                      'Unable to load shipments.'),
+                  Text(shipmentsState.errorMessage ?? 'Unable to load shipments.'),
                   TextButton(
                     onPressed: context.read<ShipmentsCubit>().loadFirstPage,
                     child: Text(tr(context, AppLocaleKey.retry)),

@@ -14,25 +14,54 @@ class HomeCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
   final Widget? iconWidget;
+
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: SurfaceCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, color: AppColors.red),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(value, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(width: 3),
-            iconWidget ?? SizedBox()
-          ],
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: 120,
+          child: SurfaceCard(
+            color: AppColors.navy,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: AppColors.red),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge!
+                            .copyWith(color: AppColors.white),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      value,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge!
+                          .copyWith(color: AppColors.white),
+                    ),
+                    const SizedBox(width: 3),
+                    iconWidget ?? const SizedBox(),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 3),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ])));
+      );
 }

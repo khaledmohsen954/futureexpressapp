@@ -14,6 +14,9 @@ Future<void> initDependencies() async {
   sl.registerFactory<LogoutRepository>(
     () => LogoutRepository(sl<ApiConsumer>()),
   );
+  sl.registerFactory<ProfileRepository>(
+    () => ProfileRepository(sl<ApiConsumer>()),
+  );
   sl.registerFactory<ShiftRepository>(
     () => ShiftRepository(sl<ApiConsumer>()),
   );

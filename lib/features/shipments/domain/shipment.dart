@@ -13,12 +13,18 @@ class Shipment {
       this.orderId,
       this.store,
       this.storeImage,
+      this.storePhone,
+      this.storeEmail,
       this.storeCity,
       this.storeCityAr,
+      this.trackingNumber,
+      this.clientAddress,
+      this.addressDetails,
       this.referenceNumber,
       this.numberCount,
       this.orderContents,
       this.pickupDate,
+      this.amountLabel,
       this.amountPaid,
       this.whatsappMessageEn,
       this.whatsappMessageAr,
@@ -35,12 +41,18 @@ class Shipment {
   final String customerPhone;
   final String? store;
   final String? storeImage;
+  final String? storePhone;
+  final String? storeEmail;
   final String? storeCity;
   final String? storeCityAr;
+  final String? trackingNumber;
+  final String? clientAddress;
+  final String? addressDetails;
   final String? referenceNumber;
   final int? numberCount;
   final String? orderContents;
   final String? pickupDate;
+  final String? amountLabel;
   final int? amountPaid;
   final String? whatsappMessageEn;
   final String? whatsappMessageAr;
@@ -61,12 +73,18 @@ class Shipment {
         customerPhone: customerPhone,
         store: store,
         storeImage: storeImage,
+        storePhone: storePhone,
+        storeEmail: storeEmail,
         storeCity: storeCity,
         storeCityAr: storeCityAr,
+        trackingNumber: trackingNumber,
+        clientAddress: clientAddress,
+        addressDetails: addressDetails,
         referenceNumber: referenceNumber,
         numberCount: numberCount,
         orderContents: orderContents,
         pickupDate: pickupDate,
+        amountLabel: amountLabel,
         amountPaid: amountPaid,
         whatsappMessageEn: whatsappMessageEn,
         whatsappMessageAr: whatsappMessageAr,
@@ -79,10 +97,10 @@ class Shipment {
       );
 }
 
-enum ShipmentStatus { pending, inTransit, delivered, failed, other }
+enum ShipmentStatus { inTransit, delivered, failed, other }
 
 extension ShipmentStatusApi on ShipmentStatus {
-  static const int statusReceived = 329;
+  // static const int statusReceived = 327;
   static const int statusInTransit = 17;
   static const int statusDelivered = 220;
   static const int statusDeliveryFailed = 34;
@@ -93,7 +111,7 @@ extension ShipmentStatusApi on ShipmentStatus {
   };
 
   int get apiId => switch (this) {
-        ShipmentStatus.pending => statusReceived,
+        // ShipmentStatus.pending => statusReceived,
         ShipmentStatus.inTransit => statusInTransit,
         ShipmentStatus.delivered => statusDelivered,
         ShipmentStatus.failed => statusDeliveryFailed,
@@ -101,7 +119,7 @@ extension ShipmentStatusApi on ShipmentStatus {
       };
 
   static ShipmentStatus? fromApiId(int? id) => switch (id) {
-        statusReceived => ShipmentStatus.pending,
+        // statusReceived => ShipmentStatus.pending,
         statusInTransit => ShipmentStatus.inTransit,
         statusDelivered => ShipmentStatus.delivered,
         statusDeliveryFailed => ShipmentStatus.failed,
@@ -110,8 +128,8 @@ extension ShipmentStatusApi on ShipmentStatus {
 
   static ShipmentStatus? fromLegacyStatus(String? status) {
     switch (status?.trim().toLowerCase()) {
-      case 'received order':
-        return ShipmentStatus.pending;
+      // case 'received order':
+      //   return ShipmentStatus.pending;
       case 'out of dlivery':
       case 'out for delivery':
         return ShipmentStatus.inTransit;

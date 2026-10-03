@@ -54,6 +54,13 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
         locationUnavailable: true,
       ));
       return false;
+    } on StateError {
+      if (isClosed) return false;
+      emit(const ShipmentStatusUpdateState(
+        status: ShipmentStatusUpdateStatus.failure,
+        locationUnavailable: true,
+      ));
+      return false;
     }
     if (isClosed) return false;
     if (position == null) {

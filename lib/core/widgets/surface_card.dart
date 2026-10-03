@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme.dart';
 
 /// Reusable surface with soft border and spacing matching Figma cards.
@@ -18,8 +19,7 @@ class SurfaceCard extends StatelessWidget {
       decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-              color: color == AppColors.surface ? AppColors.border : color),
+          border: Border.all(color: color == AppColors.surface ? AppColors.border : color),
           boxShadow: [
             BoxShadow(
                 color: AppColors.navy.withValues(alpha: .035),

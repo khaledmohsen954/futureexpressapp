@@ -1,10 +1,11 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:futureexpressapp/core/error/failures.dart';
 import 'package:futureexpressapp/core/network/api_consumer.dart';
 import 'package:futureexpressapp/core/network/end_points.dart';
 import 'package:futureexpressapp/features/shipments/data/models/order_model.dart';
-import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 import 'package:futureexpressapp/features/shipments/data/models/shipment_status_filter.dart';
+import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
 class ShipmentsRepository {
   ShipmentsRepository(this._apiConsumer);
@@ -82,6 +83,55 @@ class ShipmentsRepository {
     }
   }
 
+  Future<Either<Failure, Shipment>> scanOrder(String orderId) async {
+    final normalizedOrderId = orderId.trim();
+    if (normalizedOrderId.isEmpty) {
+      return Left(ServerFailure('An order ID is required to scan.'));
+    }
+
+    final result = await handleDioRequest<dynamic>(
+      request: () => _apiConsumer.post(
+        EndPoints.v3ScanOrder,
+        body: {'order_id': normalizedOrderId},
+        isFormData: true,
+        requiresAuth: true,
+        showToast: false,
+      ),
+    );
+    final failure = result.fold<Failure?>((failure) => failure, (_) => null);
+    if (failure != null) return Left(failure);
+    final response = result.fold<dynamic>((_) => null, (data) => data);
+    if (response is! Map) {
+      return Left(ServerFailure('Invalid scan order response from server.'));
+    }
+    final success = response['success'];
+    if (success != true && success != 1 && success != '1') {
+      final message = response['message'];
+      return Left(ServerFailure(
+        message is String && message.isNotEmpty
+            ? message
+            : 'Unable to find the scanned order.',
+      ));
+    }
+
+    final orders = response['Order'];
+    if (orders is! List || orders.isEmpty || orders.first is! Map) {
+      return Left(ServerFailure('Scan response is missing order details.'));
+    }
+    try {
+      final shipment =
+          OrderModel.fromJson(Map<String, dynamic>.from(orders.first as Map));
+      if (shipment == null) {
+        return Left(ServerFailure('Scanned order has no order ID.'));
+      }
+      return Right(shipment);
+    } on FormatException catch (error) {
+      return Left(ServerFailure(error.message));
+    } on TypeError {
+      return Left(ServerFailure('Scanned order contains invalid data.'));
+    }
+  }
+
   Future<Either<Failure, ShipmentStatusUpdateResult>> updateShipmentStatus({
     required List<String> orderIds,
     required int statusId,
@@ -89,25 +139,38 @@ class ShipmentsRepository {
     required double longitude,
     required String notes,
   }) async {
-    final validOrderIds = orderIds
-        .map((orderId) => orderId.trim())
-        .where((orderId) => orderId.isNotEmpty)
-        .toList();
-    if (validOrderIds.isEmpty) {
+    if (orderIds.isEmpty) {
       return Left(ServerFailure('At least one order ID is required.'));
+    }
+    final numericOrderIds = <int>[];
+    for (final orderId in orderIds) {
+      final numericOrderId = int.tryParse(orderId.trim());
+      if (numericOrderId == null) {
+        return Left(ServerFailure(
+          'Order IDs must be numeric database IDs, not tracking numbers.',
+        ));
+      }
+      numericOrderIds.add(numericOrderId);
+    }
+    final requestBody = {
+      for (var index = 0; index < numericOrderIds.length; index++)
+        'order_id[$index]': numericOrderIds[index],
+      'status_id': statusId,
+      'latitude': latitude,
+      'longitude': longitude,
+      'notes': notes,
+    };
+    if (kDebugMode) {
+      debugPrint(
+        'updateStatus request | method=POST | '
+        'url=${EndPoints.v3ScanAndAssign} | form-data=$requestBody',
+      );
     }
 
     final result = await handleDioRequest<dynamic>(
       request: () => _apiConsumer.post(
         EndPoints.v3ScanAndAssign,
-        body: {
-          for (var index = 0; index < validOrderIds.length; index++)
-            'order_id[$index]': validOrderIds[index],
-          'status_id': statusId,
-          'latitude': latitude,
-          'longitude': longitude,
-          'notes': notes,
-        },
+        body: requestBody,
         isFormData: true,
         requiresAuth: true,
         showToast: false,

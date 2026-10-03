@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/routes/routes_name.dart';
-import '../../../../core/utils/navigator_methods.dart';
+
 import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/routes/routes_name.dart';
 import '../../../../core/state/app_state.dart';
 import '../../../../core/theme.dart';
+import '../../../../core/utils/navigator_methods.dart';
 import '../../../../core/widgets.dart';
 import '../../domain/shipment.dart';
 import '../cubit/shipments_cubit.dart';
@@ -19,8 +20,7 @@ class ShipmentDetails extends StatelessWidget {
         const Divider(),
         _DetailRow(Icons.phone_outlined, shipment.customerPhone),
         const SizedBox(height: 8),
-        _DetailRow(
-            Icons.notes_outlined, tr(context, AppLocaleKey.customerNote)),
+        _DetailRow(Icons.notes_outlined, tr(context, AppLocaleKey.customerNote)),
         const SizedBox(height: 8),
         _DetailRow(
             Icons.payments_outlined,
@@ -47,8 +47,7 @@ class ShipmentDetails extends StatelessWidget {
                 });
               }),
         ],
-        if (shipment.status == ShipmentStatus.inTransit ||
-            shipment.status == ShipmentStatus.pending) ...[
+        if (shipment.status == ShipmentStatus.inTransit) ...[
           const SizedBox(height: 10),
           ActionButton(
             label: tr(context, AppLocaleKey.deliveryFailure),

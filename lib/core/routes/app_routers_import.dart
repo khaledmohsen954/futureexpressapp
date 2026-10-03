@@ -4,6 +4,7 @@ import 'package:futureexpressapp/core/services/services_locator_imports.dart';
 import 'package:futureexpressapp/core/routes/routes_name.dart';
 import 'package:futureexpressapp/features/pickup/presentation/screens/delivery_failure_screen.dart';
 import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_screen.dart';
+import 'package:futureexpressapp/features/profile/presentation/screens/profile_screen.dart';
 import 'package:futureexpressapp/features/reports/data/models/daily_report.dart';
 import 'package:futureexpressapp/features/reports/data/repositories/daily_report_repository.dart';
 import 'package:futureexpressapp/features/reports/presentation/cubit/daily_report_cubit.dart';

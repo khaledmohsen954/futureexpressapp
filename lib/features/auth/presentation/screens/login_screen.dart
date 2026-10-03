@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
 import 'package:futureexpressapp/features/auth/data/repositories/login_repository.dart';
 import 'package:futureexpressapp/features/auth/presentation/cubit/login_cubit.dart';
+import 'package:futureexpressapp/features/profile/data/models/user_profile.dart';
 
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/l10n/app_strings.dart';
@@ -42,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
               name: user.name,
               email: user.email,
               city: user.city,
+              profile: UserProfile.fromLoginUser(user),
             );
           } else if (state.status == LoginStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(

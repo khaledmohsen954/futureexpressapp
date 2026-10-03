@@ -19,12 +19,12 @@ class HomePickupCard extends StatelessWidget {
           Row(children: [
             const Icon(Icons.local_shipping_outlined, color: AppColors.onDark),
             const SizedBox(width: 9),
-            Text(tr(context, AppLocaleKey.pickupTask),
+            Text(tr(context, "pickup"),
                 style:
                     Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.onDarkMuted))
           ]),
           const SizedBox(height: 7),
-          Text(tr(context, AppLocaleKey.warehousePickup),
+          Text(tr(context, "PicUp"),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.onDark)),
           const SizedBox(height: 12),
           ActionButton(

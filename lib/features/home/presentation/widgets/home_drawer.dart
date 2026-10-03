@@ -52,6 +52,14 @@ class HomeDrawer extends StatelessWidget {
               ),
             ),
             ListTile(
+              leading: const Icon(Icons.person_outline, color: AppColors.red),
+              title: Text(tr(context, AppLocaleKey.profile)),
+              onTap: () {
+                Navigator.pop(context);
+                NavigatorMethods.pushNamed(context, RoutesName.profileScreen);
+              },
+            ),
+            ListTile(
               leading:
                   const Icon(Icons.headset_mic_outlined, color: AppColors.red),
               title: Text(tr(context, AppLocaleKey.help)),

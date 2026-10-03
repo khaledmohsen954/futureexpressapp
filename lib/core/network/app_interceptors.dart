@@ -96,6 +96,14 @@ class AppInterceptors extends Interceptor {
         options.headers['Authorization'] = 'Bearer $token';
       }
 
+      if (useAuth && token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+
+      if (useAuth && token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = ['Bearer', token].join(' ');
+      }
+
       // network check
       final hasConn = await CommonMethods.hasConnection();
       isInternet = hasConn;

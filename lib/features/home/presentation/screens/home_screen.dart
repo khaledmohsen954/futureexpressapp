@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_app_bar_methoud.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_card_staus_list.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_drawer.dart';
-import 'package:futureexpressapp/features/home/presentation/widgets/home_order_card.dart';
-import 'package:futureexpressapp/features/home/presentation/widgets/home_pickup_card.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_shift_status_card.dart';
 
 import '../../../../core/l10n/app_strings.dart';
@@ -26,16 +24,17 @@ class HomeScreen extends StatelessWidget {
       body: PageBody(children: [
         Text(tr(context, AppLocaleKey.welcome), style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 15),
-        HomePickupCard(),
+        ShiftStatusCard(state: state),
+        const SizedBox(height: 15),
+        //HomePickupCard(),
         const SizedBox(height: 19),
         HomeCardStatusList(state: state, onTab: onTab),
         const SizedBox(height: 20),
-        ShiftStatusCard(state: state),
         const SizedBox(height: 17),
-        SectionTitle(tr(context, AppLocaleKey.recentShipments),
-            action: tr(context, AppLocaleKey.seeAll), onAction: () => onTab(1)),
-        const SizedBox(height: 8),
-        HomeOrderCard(recent: recent, english: english),
+        // SectionTitle(tr(context, AppLocaleKey.recentShipments),
+        //     action: tr(context, AppLocaleKey.seeAll), onAction: () => onTab(1)),
+        // const SizedBox(height: 8),
+        // HomeOrderCard(recent: recent, english: english),
       ]),
     );
   }

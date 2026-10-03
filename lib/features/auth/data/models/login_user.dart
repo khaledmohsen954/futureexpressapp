@@ -11,6 +11,11 @@ class LoginUser {
     this.workType,
     this.successRate,
     this.completedShipments,
+    this.nationalId,
+    this.licenseNumber,
+    this.licensePhoto,
+    this.bankName,
+    this.bankAccountNumber,
     this.avatar,
   });
 
@@ -25,6 +30,11 @@ class LoginUser {
   final int? workType;
   final num? successRate;
   final int? completedShipments;
+  final String? nationalId;
+  final String? licenseNumber;
+  final String? licensePhoto;
+  final String? bankName;
+  final String? bankAccountNumber;
   final String? avatar;
 
   factory LoginUser.fromJson(Map<String, dynamic> json) {
@@ -45,6 +55,11 @@ class LoginUser {
       workType: _asInt(json['work_type']),
       successRate: json['success_rate'] as num?,
       completedShipments: _asInt(json['completed_shipments']),
+      nationalId: json['national_id'] as String?,
+      licenseNumber: json['license_number'] as String?,
+      licensePhoto: json['license_photo'] as String?,
+      bankName: json['bank_name'] as String?,
+      bankAccountNumber: json['bank_account_number'] as String?,
       avatar: json['avatar'] as String?,
     );
   }

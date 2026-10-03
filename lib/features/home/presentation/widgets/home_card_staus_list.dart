@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:futureexpressapp/core/assets/app_images.dart';
+import 'package:futureexpressapp/core/theme/app_colors.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_card.dart';
 
 import '../../../../core/l10n/app_strings.dart';
@@ -51,7 +52,34 @@ class HomeCardStatusList extends StatelessWidget {
                   label: tr(context, AppLocaleKey.todayCollection),
                   value: '${state.totalCollected}',
                   icon: Icons.payments_outlined,
-                  iconWidget: SvgPicture.asset(AppImages.saudiRiyal, width: 35, height: 35),
+                  iconWidget: SvgPicture.asset(
+                    AppImages.saudiRiyal,
+                    width: 35,
+                    height: 35,
+                    colorFilter: ColorFilter.mode(AppColor.whiteColor(context), BlendMode.srcIn),
+                  ),
+                  onTap: () => onTab(3))),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(
+              child: HomeCard(
+                  label: "PickUP",
+                  value: '${state.count(ShipmentStatus.inTransit)}',
+                  icon: Icons.inventory_2_sharp,
+                  onTap: () => onTab(1))),
+          const SizedBox(width: 10),
+          Expanded(
+              child: HomeCard(
+                  label: tr(context, AppLocaleKey.todayCollection),
+                  value: '${state.totalCollected}',
+                  icon: Icons.location_on_sharp,
+                  iconWidget: SvgPicture.asset(
+                    AppImages.saudiRiyal,
+                    width: 35,
+                    height: 35,
+                    colorFilter: ColorFilter.mode(AppColor.whiteColor(context), BlendMode.srcIn),
+                  ),
                   onTap: () => onTab(3))),
         ]),
       ],

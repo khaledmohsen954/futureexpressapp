@@ -5,6 +5,7 @@ import 'package:futureexpressapp/features/shipments/presentation/cubit/shipment_
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/state/app_state.dart';
 import '../../../../core/theme.dart';
+import '../../../../core/utils/location_requirement.dart';
 import '../../../../core/widgets.dart';
 
 /// Figma 11:428 — records a failed delivery against the selected shipment.
@@ -50,15 +51,20 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: SurfaceCard(
                     padding: EdgeInsets.zero,
-                    child: RadioListTile<String>(
+                    child: Material(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      clipBehavior: Clip.antiAlias,
+                      child: RadioListTile<String>(
                         title: Text(tr(context, key)),
                         value: key,
                         // ignore: deprecated_member_use
                         groupValue: reasonKey,
                         activeColor: AppColors.red,
                         // ignore: deprecated_member_use
-                        onChanged: (value) =>
-                            setState(() => reasonKey = value)))),
+                        onChanged: (value) => setState(() => reasonKey = value),
+                      ),
+                    ))),
           const SizedBox(height: 13),
           Text(tr(context, AppLocaleKey.notes),
               style: Theme.of(context).textTheme.labelLarge),
@@ -86,11 +92,16 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
                         failureReason,
                         if (failureNotes.isNotEmpty) failureNotes,
                       ].join(': ');
+                      final locationReady =
+                          await LocationRequirement.ensureForShipmentStatus(
+                        context,
+                      );
+                      if (!context.mounted || !locationReady) return;
                       final success = await context
                           .read<ShipmentStatusCubit>()
                           .updateStatus(
                         orderIds: [
-                          widget.shipment.orderId ?? widget.shipment.id,
+                          widget.shipment.id,
                         ],
                         statusId: ShipmentStatusApi.statusDeliveryFailed,
                         notes: notes,

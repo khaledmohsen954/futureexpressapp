@@ -1,11 +1,14 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/widgets.dart';
-import '../error/failures.dart';
+
 import '../../features/auth/data/repositories/logout_repository.dart';
 import '../../features/home/data/repositories/shift_repository.dart';
-import '../../features/shipments/domain/shipment.dart';
+import '../../features/profile/data/models/user_profile.dart';
+import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/shipments/data/sample_shipments.dart';
+import '../../features/shipments/domain/shipment.dart';
 import '../cache/hive/hive_methods.dart';
+import '../error/failures.dart';
 import '../storage/local_preview_repository.dart';
 
 /// Central state: shipment actions update every dependent screen and local storage.
@@ -28,24 +31,23 @@ class AppState extends ChangeNotifier {
   String? name;
   String? email;
   String? city;
+  UserProfile? userProfile;
+  bool isCheckingProfile = false;
+  String? profileLoadError;
   Locale locale = const Locale('ar', 'SA');
   final Map<String, String> failureReasons = {};
   final Map<String, String> failureNotes = {};
   final Set<String> pickedUpIds = {};
 
-  int count(ShipmentStatus status) =>
-      _shipments.where((s) => s.status == status).length;
+  int count(ShipmentStatus status) => _shipments.where((s) => s.status == status).length;
   int get totalCollected => _shipments
       .where((s) => s.status == ShipmentStatus.delivered)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
   int collectedFor(PaymentMethod method) => _shipments
-      .where((s) =>
-          s.status == ShipmentStatus.delivered && s.paymentMethod == method)
+      .where((s) => s.status == ShipmentStatus.delivered && s.paymentMethod == method)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
   int get pendingAmount => _shipments
-      .where((s) =>
-          s.status != ShipmentStatus.delivered &&
-          s.status != ShipmentStatus.failed)
+      .where((s) => s.status != ShipmentStatus.delivered && s.status != ShipmentStatus.failed)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
 
   /// Restore the demo's language, status changes, pickup history and report.
@@ -55,6 +57,7 @@ class AppState extends ChangeNotifier {
     final userData = HiveMethods.getUserData();
     signedIn = token != null && token.isNotEmpty;
     if (userData != null) {
+      userProfile = UserProfile.fromJson(userData);
       clientId = _asInt(userData['id']);
       name = userData['name'] as String?;
       phone = userData['phone'] as String? ?? '';
@@ -66,8 +69,7 @@ class AppState extends ChangeNotifier {
         _asBool(userData?['shift_status']) ??
         (saved['onDuty'] == true);
     reportSent = saved['reportSent'] == true;
-    reportNotes =
-        saved['reportNotes'] is String ? saved['reportNotes'] as String : '';
+    reportNotes = saved['reportNotes'] is String ? saved['reportNotes'] as String : '';
     if (saved['pickedUp'] is List) {
       pickedUpIds.addAll((saved['pickedUp'] as List).whereType<String>());
     }
@@ -118,13 +120,53 @@ class AppState extends ChangeNotifier {
     String? name,
     String? email,
     String? city,
+    UserProfile? profile,
   }) {
     this.phone = phone;
     this.clientId = clientId;
     this.name = name;
     this.email = email;
     this.city = city;
+    userProfile = profile ?? UserProfile(name: name, phone: phone, email: email, city: city);
+    onDuty = profile?.shiftStatus ?? onDuty;
+    profileLoadError = null;
+    isCheckingProfile = false;
     signedIn = true;
+    notifyListeners();
+  }
+
+  Future<void> refreshProfile(ProfileRepository repository) async {
+    if (!signedIn || isCheckingProfile) return;
+    isCheckingProfile = true;
+    profileLoadError = null;
+    notifyListeners();
+
+    final result = await repository.getProfile();
+    if (!signedIn) return;
+    final failure = result.fold<Failure?>((failure) => failure, (_) => null);
+    if (failure != null) {
+      isCheckingProfile = false;
+      profileLoadError = failure.errMessage;
+      notifyListeners();
+      return;
+    }
+    final profile = result.fold<UserProfile?>((_) => null, (profile) => profile);
+    await setUserProfile(profile!);
+    isCheckingProfile = false;
+    profileLoadError = null;
+    notifyListeners();
+  }
+
+  Future<void> setUserProfile(UserProfile profile) async {
+    userProfile = profile;
+    clientId = profile.id ?? clientId;
+    name = profile.name;
+    phone = profile.phone ?? phone;
+    email = profile.email;
+    city = profile.city;
+    onDuty = profile.shiftStatus ?? onDuty;
+    await HiveMethods.updateUserData(profile.toCacheMap());
+    await HiveMethods.updateShiftStatus(onDuty);
     notifyListeners();
   }
 
@@ -138,6 +180,9 @@ class AppState extends ChangeNotifier {
     name = null;
     email = null;
     city = null;
+    userProfile = null;
+    profileLoadError = null;
+    isCheckingProfile = false;
     notifyListeners();
     return result;
   }
@@ -151,13 +196,14 @@ class AppState extends ChangeNotifier {
     name = null;
     email = null;
     city = null;
+    userProfile = null;
+    profileLoadError = null;
+    isCheckingProfile = false;
     notifyListeners();
   }
 
   void toggleLanguage() {
-    locale = locale.languageCode == 'ar'
-        ? const Locale('en', 'US')
-        : const Locale('ar', 'SA');
+    locale = locale.languageCode == 'ar' ? const Locale('en', 'US') : const Locale('ar', 'SA');
     _changed();
   }
 
@@ -191,11 +237,10 @@ class AppState extends ChangeNotifier {
 
   /// A simulated scan moves the next waiting shipment to in-transit.
   Shipment? pickupNext() {
-    final index =
-        _shipments.indexWhere((s) => s.status == ShipmentStatus.pending);
+    final index = _shipments.indexWhere((s) => s.status == ShipmentStatus.inTransit);
     if (index < 0) return null;
     final shipment = _shipments[index];
-    _shipments[index] = shipment.copyWith(status: ShipmentStatus.inTransit);
+    _shipments[index] = shipment.copyWith(status: ShipmentStatus.delivered);
     pickedUpIds.add(shipment.id);
     reportSent = false;
     _changed();
@@ -204,11 +249,9 @@ class AppState extends ChangeNotifier {
 
   /// Confirmed delivery updates the wallet and report totals immediately.
   bool deliver(String id) {
-    final index = _shipments
-        .indexWhere((s) => s.id == id && s.status == ShipmentStatus.inTransit);
+    final index = _shipments.indexWhere((s) => s.id == id && s.status == ShipmentStatus.inTransit);
     if (index < 0) return false;
-    _shipments[index] =
-        _shipments[index].copyWith(status: ShipmentStatus.delivered);
+    _shipments[index] = _shipments[index].copyWith(status: ShipmentStatus.delivered);
     reportSent = false;
     _changed();
     return true;
@@ -218,8 +261,7 @@ class AppState extends ChangeNotifier {
     final index = _shipments.indexWhere((shipment) => shipment.id == id);
     if (index >= 0) {
       if (_shipments[index].status == ShipmentStatus.delivered) return;
-      _shipments[index] =
-          _shipments[index].copyWith(status: ShipmentStatus.failed);
+      _shipments[index] = _shipments[index].copyWith(status: ShipmentStatus.failed);
     }
     failureReasons[id] = reasonKey;
     failureNotes[id] = notes;

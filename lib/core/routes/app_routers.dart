@@ -4,6 +4,11 @@ class AppRouters {
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case RoutesName.profileScreen:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const ProfileScreen(),
+        );
       case RoutesName.supportScreen:
         return MaterialPageRoute<void>(
           settings: settings,

@@ -4,6 +4,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 
 import '../../features/auth/data/repositories/login_repository.dart';
 import '../../features/auth/data/repositories/logout_repository.dart';
+import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/home/data/repositories/shift_repository.dart';
 import '../../features/reports/data/repositories/daily_report_repository.dart';
 import '../../features/shipments/data/repositories/shipments_repository.dart';

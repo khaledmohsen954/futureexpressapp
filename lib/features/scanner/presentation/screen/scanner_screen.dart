@@ -1,6 +1,13 @@
+import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:futureexpressapp/core/custom_widgets/custom_loading/custom_loading.dart';
+import 'package:futureexpressapp/core/error/failures.dart';
+import 'package:futureexpressapp/core/routes/routes_name.dart';
+import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/core/utils/navigator_methods.dart';
 import 'package:futureexpressapp/features/scanner/presentation/widgets/qr_code_scanner.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
+import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/state/app_state.dart';
@@ -18,6 +25,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final GlobalKey<QrCodeScannerState> scannerKey = GlobalKey<QrCodeScannerState>();
   String? _detectedCodeValue;
   bool _isLoading = false;
+  bool _scannerActive = true;
+  bool _scanFailed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -28,31 +37,78 @@ class _ScannerScreenState extends State<ScannerScreen> {
         Text(tr(context, AppLocaleKey.scanInstruction),
             textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 22),
-        QrCodeScanner(
-          key: scannerKey,
-          isLoading: _isLoading,
-          onScan: (value) async {
-            debugPrint('Detected QR / Barcode: $value');
-            // ignore: avoid_print
-            print('Detected QR / Barcode: $value');
-            setState(() {
-              _isLoading = true;
-            });
-
-            // Simulate processing / network verification delay so loading animation is visible
-            await Future.delayed(const Duration(milliseconds: 600));
-
-            if (!context.mounted) return;
-            setState(() {
-              _isLoading = false;
-              _detectedCodeValue = value;
-            });
-            showLocalMessage(context, value);
-          },
-          description: "",
-          title: "",
-          showAppBar: false,
-        ),
+        if (_scannerActive)
+          QrCodeScanner(
+            key: scannerKey,
+            isLoading: _isLoading,
+            onScan: (value) async {
+              if (_isLoading || !_scannerActive) return;
+              setState(() => _isLoading = true);
+              final result = await _scanOrder(value);
+              if (!context.mounted) return;
+              if (result == null) {
+                setState(() {
+                  _isLoading = false;
+                  _scannerActive = false;
+                  _scanFailed = true;
+                  _detectedCodeValue = value;
+                });
+                showLocalMessage(context, tr(context, AppLocaleKey.scanOrderFailed));
+                return;
+              }
+              final error = result.fold<String?>((failure) => failure.errMessage, (_) => null);
+              final shipment = result.fold(
+                (_) => null,
+                (shipment) => shipment,
+              );
+              setState(() {
+                _isLoading = false;
+                _scannerActive = false;
+                _scanFailed = error != null || shipment == null;
+                _detectedCodeValue = value;
+              });
+              if (error != null) {
+                showLocalMessage(context, error);
+                return;
+              }
+              if (shipment == null) {
+                showLocalMessage(context, tr(context, AppLocaleKey.scanOrderFailed));
+                return;
+              }
+              await NavigatorMethods.pushNamed(
+                context,
+                RoutesName.shipmentDetailsScreen,
+                arguments: shipment,
+              );
+            },
+            description: "",
+            title: "",
+            showAppBar: false,
+          )
+        else
+          SurfaceCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      _scanFailed ? Icons.qr_code_2 : Icons.check_circle_outline,
+                      size: 40,
+                      color: _scanFailed ? AppColors.red : AppColors.green,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tr(
+                        context,
+                        _scanFailed ? AppLocaleKey.retry : AppLocaleKey.scanNew,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         if (_isLoading) ...[
           const SizedBox(height: 14),
           const SurfaceCard(
@@ -94,26 +150,33 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
           ),
         ],
-        ActionButton(
-            label: tr(context, AppLocaleKey.scanDemo),
+        SizedBox(height: 20),
+        if (!_scannerActive)
+          ActionButton(
+            label: tr(
+              context,
+              _scanFailed ? AppLocaleKey.retry : AppLocaleKey.scanNew,
+            ),
             icon: Icons.qr_code_scanner,
             onPressed: () {
-              final shipment = state.pickupNext();
-              showLocalMessage(
-                  context,
-                  tr(context,
-                      shipment == null ? AppLocaleKey.noPending : AppLocaleKey.pickupSuccess));
-            }),
+              setState(() {
+                _scannerActive = true;
+                _scanFailed = false;
+                _detectedCodeValue = null;
+              });
+            },
+          ),
         const SizedBox(height: 14),
-        SurfaceCard(
-            child: Row(children: [
-          const Icon(Icons.inventory_2_outlined, color: AppColors.red),
-          const SizedBox(width: 12),
-          Expanded(child: Text(tr(context, AppLocaleKey.pickedUpToday))),
-          Text('${state.pickedUpIds.length} / ${state.shipments.length}',
-              style: Theme.of(context).textTheme.labelLarge),
-        ])),
       ]),
     );
+  }
+
+  Future<Either<Failure, Shipment>?> _scanOrder(String value) async {
+    try {
+      return await sl<ShipmentsRepository>().scanOrder(value);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to scan order: $error\n$stackTrace');
+      return null;
+    }
   }
 }

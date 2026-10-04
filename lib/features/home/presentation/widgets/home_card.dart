@@ -45,20 +45,37 @@ class HomeCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      value,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(color: AppColors.white),
+                if (value.isEmpty)
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: AppColors.onDarkMuted,
+                      size: 22,
                     ),
-                    const SizedBox(width: 3),
-                    iconWidget ?? const SizedBox(),
-                  ],
-                ),
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textDirection: TextDirection.ltr,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge!
+                              .copyWith(color: AppColors.white),
+                        ),
+                      ),
+                      if (iconWidget != null) ...[
+                        const SizedBox(width: 5),
+                        iconWidget!,
+                      ],
+                    ],
+                  ),
               ],
             ),
           ),

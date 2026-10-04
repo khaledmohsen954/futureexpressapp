@@ -14,9 +14,21 @@ class EndPoints {
   static const String v3Logout = 'https://future-ex.com/api/v3/logout';
   static const String v3Orders = 'https://future-ex.com/api/v3/orders';
   static const String v3Statuses = 'https://future-ex.com/api/v3/statuses';
+  static const String v3HomeSummary =
+      'https://future-ex.com/api/v3/home-summary';
+  static const String v3AppSettings =
+      'https://future-ex.com/api/v3/App_setting';
   static const String v3ScanAndAssign =
       'https://future-ex.com/api/v3/orders/scan-and-assign';
+  static String v3ConfirmOrderOtp(int id) =>
+      'https://future-ex.com/api/v3/orders/confirm-otp/$id';
   static const String v3ScanOrder = 'https://future-ex.com/api/v3/scan-order';
+  static const String v3MarkWhatsappSent =
+      'https://future-ex.com/api/v3/scan-order/whatsapp/mark-sent';
+  static const String v3ConfirmPickupFromCustomer =
+      'https://future-ex.com/api/v3/return-pickup/confirm-from-customer';
+  static const String v3ConfirmPickupFromMerchant =
+      'https://future-ex.com/api/v3/return-pickup/confirm-from-merchant';
   static const String v3DailyReport =
       'https://future-ex.com/api/v3/daily-report';
   static const String v3SubmitDailyReport =

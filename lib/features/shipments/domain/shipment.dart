@@ -28,9 +28,12 @@ class Shipment {
       this.amountPaid,
       this.whatsappMessageEn,
       this.whatsappMessageAr,
+      this.whatsappSent = false,
       this.apiStatusId,
       this.statusLabel,
-      this.statusLabelAr});
+      this.statusLabelAr,
+      this.latitude,
+      this.longitude});
 
   final String id;
   final String? orderId;
@@ -56,9 +59,12 @@ class Shipment {
   final int? amountPaid;
   final String? whatsappMessageEn;
   final String? whatsappMessageAr;
+  final bool whatsappSent;
   final int? apiStatusId;
   final String? statusLabel;
   final String? statusLabelAr;
+  final double? latitude;
+  final double? longitude;
   final PaymentMethod paymentMethod;
   final ShipmentStatus status;
   final int amount;
@@ -88,9 +94,12 @@ class Shipment {
         amountPaid: amountPaid,
         whatsappMessageEn: whatsappMessageEn,
         whatsappMessageAr: whatsappMessageAr,
+        whatsappSent: whatsappSent,
         apiStatusId: apiStatusId,
         statusLabel: statusLabel,
         statusLabelAr: statusLabelAr,
+        latitude: latitude,
+        longitude: longitude,
         paymentMethod: paymentMethod,
         status: status ?? this.status,
         amount: amount,

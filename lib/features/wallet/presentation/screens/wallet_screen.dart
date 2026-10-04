@@ -148,21 +148,19 @@ class _Balance extends StatelessWidget {
 class _Transaction extends StatelessWidget {
   const _Transaction({required this.transaction});
 
-  final Map<String, dynamic> transaction;
+  final BalanceTransaction transaction;
 
   @override
   Widget build(BuildContext context) {
-    final title = transaction['title'] ??
-        transaction['description'] ??
-        transaction['order_id'] ??
-        transaction['id'] ??
-        tr(context, AppLocaleKey.shipmentCollection);
-    final amount = transaction['amount'] ??
-        transaction['total'] ??
-        transaction['cash_amount'] ??
-        transaction['pos_amount'] ??
-        0;
-    final subtitle = transaction['date'] ?? transaction['notes'] ?? '';
+    final title = transaction.description.isNotEmpty
+        ? transaction.description
+        : transaction.order?.orderId ??
+            transaction.id?.toString() ??
+            tr(context, AppLocaleKey.shipmentCollection);
+    final subtitle = [
+      transaction.order?.orderId,
+      transaction.date,
+    ].whereType<String>().where((value) => value.isNotEmpty).join(' · ');
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -177,14 +175,18 @@ class _Transaction extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$title', style: Theme.of(context).textTheme.labelLarge),
+                Text(title, style: Theme.of(context).textTheme.labelLarge),
                 if (subtitle.toString().isNotEmpty)
-                  Text('$subtitle',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
-          Money(amount, color: AppColors.green),
+          Money(
+            transaction.amount,
+            color: transaction.amount < 0 ? AppColors.red : AppColors.green,
+            size: 20,
+            crossAxisAlignment: CrossAxisAlignment.end,
+          ),
         ]),
       ),
     );

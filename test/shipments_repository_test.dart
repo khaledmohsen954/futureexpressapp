@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futureexpressapp/core/network/end_points.dart';
 import 'package:futureexpressapp/features/shipments/data/models/order_model.dart';
@@ -7,6 +10,19 @@ import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments
 import 'helpers/fake_shipments_api.dart';
 
 void main() {
+  late File failureImage;
+
+  setUpAll(() async {
+    failureImage = File(
+      '${Directory.systemTemp.path}/futureexpress-failure-image-test.jpg',
+    );
+    await failureImage.writeAsBytes([0xFF, 0xD8, 0xFF, 0xD9]);
+  });
+
+  tearDownAll(() async {
+    if (await failureImage.exists()) await failureImage.delete();
+  });
+
   test('fetches and parses authenticated API shipment statuses', () async {
     final api = createTestShipmentsApi();
 
@@ -56,6 +72,7 @@ void main() {
       latitude: 24.7136,
       longitude: 46.6753,
       notes: '',
+      failureImage: failureImage,
     );
 
     expect(result.isRight(), isTrue);
@@ -77,7 +94,96 @@ void main() {
       'latitude': 24.7136,
       'longitude': 46.6753,
       'notes': '',
+      'failure_image': isA<MultipartFile>(),
     });
+  });
+
+  test('marks WhatsApp as sent for the order', () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api.createRepository().markWhatsappSent(' 8300 ');
+
+    expect(result.isRight(), isTrue);
+    expect(api.postedPath, EndPoints.v3MarkWhatsappSent);
+    expect(api.postedBody, {'order_id': '8300'});
+    expect(api.postedAsFormData, isFalse);
+    expect(api.postedRequiresAuth, isTrue);
+  });
+
+  test('verifies delivery OTP with captured image before status update',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1, 'message': 'OTP verified'},
+    );
+
+    final result = await api.createRepository().confirmShipmentOtp(
+          orderId: '8300',
+          otp: ' 4821 ',
+          userId: 42,
+          image: failureImage,
+        );
+
+    expect(result.isRight(), isTrue);
+    expect(api.postedPath, EndPoints.v3ConfirmOrderOtp(8300));
+    expect(api.postedBody, {
+      'otp': '4821',
+      'user_id': 42,
+      'image': isA<MultipartFile>(),
+    });
+    expect(api.postedAsFormData, isTrue);
+    expect(api.postedRequiresAuth, isTrue);
+  });
+
+  test('returns OTP rejection without treating it as verified', () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 0, 'message': 'Invalid OTP'},
+    );
+
+    final result = await api.createRepository().confirmShipmentOtp(
+          orderId: '8300',
+          otp: '0000',
+          userId: 42,
+          image: failureImage,
+        );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.errMessage, 'Invalid OTP'),
+      (_) => fail('Expected an invalid OTP to be rejected.'),
+    );
+    expect(api.postedPath, EndPoints.v3ConfirmOrderOtp(8300));
+  });
+
+  test('rejects an empty order ID without posting WhatsApp marker', () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api.createRepository().markWhatsappSent(' ');
+
+    expect(result.isLeft(), isTrue);
+    expect(api.postedPath, isNull);
+  });
+
+  test('returns a mark WhatsApp sent API rejection', () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 0, 'message': 'Unable to mark message'},
+    );
+
+    final result = await api.createRepository().markWhatsappSent('8300');
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.errMessage, 'Unable to mark message'),
+      (_) => fail('Expected the API rejection to be returned as a failure.'),
+    );
   });
 
   test('serializes multiple order IDs as indexed form fields', () async {
@@ -92,6 +198,7 @@ void main() {
       latitude: 24.7136,
       longitude: 46.6753,
       notes: '',
+      failureImage: failureImage,
     );
 
     expect(result.isRight(), isTrue);
@@ -102,6 +209,7 @@ void main() {
       'latitude': 24.7136,
       'longitude': 46.6753,
       'notes': '',
+      'failure_image': isA<MultipartFile>(),
     });
   });
 
@@ -118,6 +226,7 @@ void main() {
       latitude: 24.7136,
       longitude: 46.6753,
       notes: '',
+      failureImage: failureImage,
     );
 
     expect(result.isLeft(), isTrue);
@@ -140,10 +249,58 @@ void main() {
       latitude: 24.7136,
       longitude: 46.6753,
       notes: '',
+      failureImage: failureImage,
     );
 
     expect(result.isLeft(), isTrue);
     expect(api.postedPath, isNull);
+  });
+
+  test('rejects a missing failure image without posting a status update',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+    final missingImage = File(
+      '${Directory.systemTemp.path}/missing-futureexpress-failure-image.jpg',
+    );
+
+    final result = await api.createRepository().updateShipmentStatus(
+      orderIds: ['8300'],
+      statusId: ShipmentStatusApi.statusDelivered,
+      latitude: 24.7136,
+      longitude: 46.6753,
+      notes: '',
+      failureImage: missingImage,
+    );
+
+    expect(result.isLeft(), isTrue);
+    expect(api.postedPath, isNull);
+  });
+
+  test('does not add failure_image to other status updates', () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api.createRepository().updateShipmentStatus(
+      orderIds: ['8300'],
+      statusId: ShipmentStatusApi.statusInTransit,
+      latitude: 24.7136,
+      longitude: 46.6753,
+      notes: '',
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(api.postedBody, {
+      'order_id[0]': 8300,
+      'status_id': ShipmentStatusApi.statusInTransit,
+      'latitude': 24.7136,
+      'longitude': 46.6753,
+      'notes': '',
+    });
   });
 
   test('maps all fields from the current orders API response', () {
@@ -169,6 +326,9 @@ void main() {
       'amount_paid': 0,
       'what_up_massage_en': 'English message',
       'what_up_massage_ar': 'رسالة عربية',
+      'whatsapp_sent': true,
+      'client_latitude': '24.7136',
+      'client_longitude': 46.6753,
     });
 
     expect(shipment, isNotNull);
@@ -194,6 +354,9 @@ void main() {
     expect(shipment.amountPaid, 0);
     expect(shipment.whatsappMessageEn, 'English message');
     expect(shipment.whatsappMessageAr, 'رسالة عربية');
+    expect(shipment.whatsappSent, isTrue);
+    expect(shipment.latitude, 24.7136);
+    expect(shipment.longitude, 46.6753);
   });
 
   test('maps order status IDs and fetches additional pages from the Cubit',

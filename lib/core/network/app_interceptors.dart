@@ -103,6 +103,11 @@ class AppInterceptors extends Interceptor {
         options.headers['Authorization'] = ['Bearer', token].join(' ');
       }
 
+      if (kDebugMode) {
+        options.extra['_requestStartedAt'] = DateTime.now();
+        _logRequest(options);
+      }
+
       // network check
       final hasConn = await CommonMethods.hasConnection();
       isInternet = hasConn;
@@ -121,20 +126,13 @@ class AppInterceptors extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler,
       {bool showToast = true}) {
-    debugPrint(
-        'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+    if (kDebugMode) _logResponse(response);
 
     if (_requiresAuthentication(response.statusCode, response.data)) {
       unawaited(AuthSession.expire());
     }
 
     try {
-      if (kDebugMode) {
-        debugPrint(
-          'RESPONSE BODY:\n${const JsonEncoder.withIndent('  ').convert(_redactSensitiveData(response.data))}',
-        );
-      }
-
       // التحكم: افتراضياً لا نعرض toast على GET، ويمكن تجاوز السلوك بواسطة extra
       final isGet = response.requestOptions.method.toUpperCase() == 'GET';
       final showToast =
@@ -180,7 +178,11 @@ class AppInterceptors extends Interceptor {
         final normalizedKey = key.toString().toLowerCase();
         final isSensitive = normalizedKey.contains('token') ||
             normalizedKey.contains('password') ||
-            normalizedKey.contains('secret');
+            normalizedKey.contains('secret') ||
+            normalizedKey.contains('authorization') ||
+            normalizedKey.contains('cookie') ||
+            normalizedKey.contains('otp') ||
+            normalizedKey.contains('api-key');
         return MapEntry(
           key.toString(),
           isSensitive ? '[REDACTED]' : _redactSensitiveData(item),
@@ -195,13 +197,93 @@ class AppInterceptors extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    debugPrint(
-      'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path} message: ${err.message}',
-    );
+    if (kDebugMode) _logError(err);
     if (_requiresAuthentication(err.response?.statusCode, err.response?.data)) {
       unawaited(AuthSession.expire());
     }
     handler.next(err);
+  }
+
+  void _logRequest(RequestOptions options) {
+    final body = options.data;
+    final formattedBody = body is FormData
+        ? {
+            'fields': body.fields
+                .map((entry) => {
+                      'field': entry.key,
+                      'value': _redactSensitiveData(
+                        {entry.key: entry.value},
+                      )[entry.key],
+                    })
+                .toList(growable: false),
+            'files': body.files
+                .map((entry) => {
+                      'field': entry.key,
+                      'filename': entry.value.filename,
+                      'contentType': entry.value.contentType.toString(),
+                      'length': entry.value.length,
+                    })
+                .toList(growable: false),
+          }
+        : _redactSensitiveData(body);
+
+    debugPrint(
+      '\n╔════════════════════ HTTP REQUEST ════════════════════\n'
+      '║ ${options.method} ${options.uri}\n'
+      '║ Headers: ${_pretty(_redactSensitiveData(options.headers))}\n'
+      '║ Query: ${_pretty(_redactSensitiveData(options.queryParameters))}\n'
+      '║ Body: ${_pretty(formattedBody)}\n'
+      '╚═════════════════════════════════════════════════════',
+    );
+  }
+
+  void _logResponse(Response response) {
+    final startedAt = response.requestOptions.extra['_requestStartedAt'];
+    final elapsed = startedAt is DateTime
+        ? ' | ${DateTime.now().difference(startedAt).inMilliseconds} ms'
+        : '';
+    debugPrint(
+      '\n╔════════════════════ HTTP RESPONSE ═══════════════════\n'
+      '║ ${response.statusCode} ${response.requestOptions.method} '
+      '${response.requestOptions.uri}$elapsed\n'
+      '║ Headers: ${_pretty(_redactSensitiveData(response.headers.map))}\n'
+      '║ Body: ${_pretty(_redactSensitiveData(response.data))}\n'
+      '╚═════════════════════════════════════════════════════',
+    );
+  }
+
+  void _logError(DioException error) {
+    final response = error.response;
+    final status = response?.statusCode ?? 'no response';
+    final responseBody =
+        response == null ? '' : _pretty(_redactSensitiveData(response.data));
+    debugPrint(
+      '\n╔════════════════════ HTTP ERROR ══════════════════════\n'
+      '║ $status ${error.requestOptions.method} ${error.requestOptions.uri}\n'
+      '║ Error: ${error.message}\n'
+      '${response == null ? '' : '║ Response: $responseBody\n'}'
+      '╚═════════════════════════════════════════════════════',
+    );
+  }
+
+  String _pretty(dynamic value) {
+    return const JsonEncoder.withIndent('  ').convert(_safeLogValue(value));
+  }
+
+  dynamic _safeLogValue(dynamic value) {
+    if (value == null || value is String || value is num || value is bool) {
+      return value;
+    }
+    if (value is List<int>) {
+      return '[binary data: ${value.length} bytes]';
+    }
+    if (value is Map) {
+      return value.map(
+        (key, item) => MapEntry(key.toString(), _safeLogValue(item)),
+      );
+    }
+    if (value is List) return value.map(_safeLogValue).toList(growable: false);
+    return value.toString();
   }
 
   bool _requiresAuthentication(int? statusCode, dynamic responseData) {

@@ -13,10 +13,19 @@ void main() {
           'success': 1,
           'message': 'balance retrieved successfully',
           'total_cash_cod': 0,
-          'balance_under_settlement': 125.5,
-          'cash_payment': 50,
-          'pos_payment': '25.25',
-          'balance': <dynamic>[],
+          'balance_under_settlement': 0,
+          'cash_payment': 0,
+          'pos_payment': 0,
+          'balance': [
+            {
+              'id': 11459,
+              'description': ' تحصيل مبلغ مالي للطلب رقم : OR0008896',
+              'debtor': '0.00',
+              'creditor': '219.00',
+              'order': {'id': 8896, 'order_id': 'OR0008896'},
+              'date': '2026-10-01',
+            },
+          ],
         },
       },
     );
@@ -24,15 +33,28 @@ void main() {
     final result = await BalanceRepository(api).getBalance();
 
     expect(api.requestedPaths, [EndPoints.v3Balance]);
+    expect(api.requestedAuth, [true]);
     result.fold(
       (_) => fail('Expected wallet balance to load.'),
       (balance) {
         expect(balance.totalCashCod, 0);
-        expect(balance.balanceUnderSettlement, 125.5);
-        expect(balance.cashPayment, 50);
-        expect(balance.posPayment, 25.25);
-        expect(balance.todayCollection, 75.25);
-        expect(balance.transactions, isEmpty);
+        expect(balance.balanceUnderSettlement, 0);
+        expect(balance.cashPayment, 0);
+        expect(balance.posPayment, 0);
+        expect(balance.todayCollection, 0);
+        expect(balance.transactions, hasLength(1));
+        final transaction = balance.transactions.single;
+        expect(transaction.id, 11459);
+        expect(
+          transaction.description,
+          ' تحصيل مبلغ مالي للطلب رقم : OR0008896',
+        );
+        expect(transaction.debtor, 0);
+        expect(transaction.creditor, 219);
+        expect(transaction.amount, 219);
+        expect(transaction.order?.id, 8896);
+        expect(transaction.order?.orderId, 'OR0008896');
+        expect(transaction.date, '2026-10-01');
       },
     );
   });

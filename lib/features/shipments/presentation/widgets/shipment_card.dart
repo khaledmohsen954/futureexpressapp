@@ -25,6 +25,8 @@ class _ShipmentCardState extends State<ShipmentCard> {
   Widget build(BuildContext context) {
     final shipment = widget.shipment;
     final english = AppScope.of(context).locale.languageCode == 'en';
+    final amount = double.tryParse(shipment.amountLabel ?? '') ??
+        shipment.amount.toDouble();
     final statusKey = switch (shipment.status) {
       // ShipmentStatus.pending => AppLocaleKey.pending,
       ShipmentStatus.inTransit => AppLocaleKey.inTransit,
@@ -33,7 +35,8 @@ class _ShipmentCardState extends State<ShipmentCard> {
       ShipmentStatus.other => AppLocaleKey.other,
     };
     final statusLabel =
-        (english ? shipment.statusLabel : shipment.statusLabelAr) ?? shipment.statusLabel;
+        (english ? shipment.statusLabel : shipment.statusLabelAr) ??
+            shipment.statusLabel;
     return Padding(
       padding: const EdgeInsets.only(bottom: 11),
       child: SurfaceCard(
@@ -54,24 +57,33 @@ class _ShipmentCardState extends State<ShipmentCard> {
                       fontWeight: FontWeight.w700))),
         ]),
         const Divider(height: 23),
-        _Info(Icons.person_outline, english ? shipment.customerEn : shipment.customerAr),
+        _Info(Icons.person_outline,
+            english ? shipment.customerEn : shipment.customerAr),
         const SizedBox(height: 8),
-        _Info(Icons.location_on_outlined, english ? shipment.addressEn : shipment.addressAr),
+        _Info(Icons.location_on_outlined,
+            english ? shipment.addressEn : shipment.addressAr),
         const SizedBox(height: 8),
         Row(children: [
           const Icon(Icons.payments_outlined, size: 19, color: AppColors.muted),
           const SizedBox(width: 8),
-          Text(tr(context, AppLocaleKey.amount), style: Theme.of(context).textTheme.bodySmall),
-          const Spacer(),
-          Money(
-            shipment.amount,
-            crossAxisAlignment: CrossAxisAlignment.end,
-          ),
+          if (amount > 0) ...[
+            Text(
+              '${tr(context, AppLocaleKey.shipmentAmount)} : ',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const Spacer(),
+            Money(amount, crossAxisAlignment: CrossAxisAlignment.end),
+          ] else
+            Text(
+              tr(context, AppLocaleKey.fullyPaidOnline),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
         ]),
         const SizedBox(height: 10),
         InkWell(
             onTap: () {
-              NavigatorMethods.pushNamed(context, RoutesName.shipmentDetailsScreen,
+              NavigatorMethods.pushNamed(
+                      context, RoutesName.shipmentDetailsScreen,
                       arguments: shipment)
                   .then((updated) {
                 if (updated == true && context.mounted) {
@@ -83,7 +95,10 @@ class _ShipmentCardState extends State<ShipmentCard> {
             },
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(tr(context, AppLocaleKey.showDetails),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.red)),
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(color: AppColors.red)),
               const Icon(Icons.chevron_right, color: AppColors.red),
             ])),
         if (expanded) ShipmentDetails(shipment: shipment),

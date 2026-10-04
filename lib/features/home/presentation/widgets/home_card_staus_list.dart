@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:futureexpressapp/core/assets/app_images.dart';
+import 'package:futureexpressapp/core/routes/routes_name.dart';
 import 'package:futureexpressapp/core/theme/app_colors.dart';
+import 'package:futureexpressapp/core/utils/navigator_methods.dart';
+import 'package:futureexpressapp/features/home/data/models/home_summary.dart';
 import 'package:futureexpressapp/features/home/presentation/widgets/home_card.dart';
+import 'package:futureexpressapp/features/shipments/presentation/screens/orders_map_screen.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/state/app_state.dart';
@@ -13,10 +17,21 @@ class HomeCardStatusList extends StatelessWidget {
     super.key,
     required this.state,
     required this.onTab,
+    this.summary,
+    this.useSummary = false,
   });
 
   final AppState state;
   final ValueChanged<int> onTab;
+  final HomeSummary? summary;
+  final bool useSummary;
+
+  String _value(int? apiValue, int fallback) =>
+      useSummary ? apiValue?.toString() ?? '—' : '$fallback';
+
+  String _collectionValue() => useSummary
+      ? summary?.todayCollected.toString() ?? '—'
+      : '${state.totalCollected}';
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +42,18 @@ class HomeCardStatusList extends StatelessWidget {
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.todayShipments),
-                  value: '${state.shipments.length}',
+                  value:
+                      _value(summary?.todayShipments, state.shipments.length),
                   icon: Icons.inventory_2_outlined,
                   onTap: () => onTab(1))),
           const SizedBox(width: 10),
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.delivered),
-                  value: '${state.count(ShipmentStatus.delivered)}',
+                  value: _value(
+                    summary?.deliveredShipments,
+                    state.count(ShipmentStatus.delivered),
+                  ),
                   icon: Icons.check_circle_outline,
                   onTap: () => onTab(1))),
         ]),
@@ -43,20 +62,26 @@ class HomeCardStatusList extends StatelessWidget {
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.inTransit),
-                  value: '${state.count(ShipmentStatus.inTransit)}',
+                  value: _value(
+                    summary?.inDeliveryShipments,
+                    state.count(ShipmentStatus.inTransit),
+                  ),
                   icon: Icons.local_shipping_outlined,
                   onTap: () => onTab(1))),
           const SizedBox(width: 10),
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.todayCollection),
-                  value: '${state.totalCollected}',
+                  value: _collectionValue(),
                   icon: Icons.payments_outlined,
                   iconWidget: SvgPicture.asset(
                     AppImages.saudiRiyal,
-                    width: 35,
-                    height: 35,
-                    colorFilter: ColorFilter.mode(AppColor.whiteColor(context), BlendMode.srcIn),
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      AppColor.whiteColor(context),
+                      BlendMode.srcIn,
+                    ),
                   ),
                   onTap: () => onTab(3))),
         ]),
@@ -64,23 +89,24 @@ class HomeCardStatusList extends StatelessWidget {
         Row(children: [
           Expanded(
               child: HomeCard(
-                  label: "PickUP",
-                  value: '${state.count(ShipmentStatus.inTransit)}',
+                  label: tr(context, AppLocaleKey.pickup),
+                  value: "",
                   icon: Icons.inventory_2_sharp,
-                  onTap: () => onTab(1))),
+                  onTap: () => NavigatorMethods.pushNamed(
+                        context,
+                        RoutesName.pickupScreen,
+                      ))),
           const SizedBox(width: 10),
           Expanded(
               child: HomeCard(
-                  label: tr(context, AppLocaleKey.todayCollection),
-                  value: '${state.totalCollected}',
+                  label: tr(context, AppLocaleKey.showOnMap),
+                  value: "",
                   icon: Icons.location_on_sharp,
-                  iconWidget: SvgPicture.asset(
-                    AppImages.saudiRiyal,
-                    width: 35,
-                    height: 35,
-                    colorFilter: ColorFilter.mode(AppColor.whiteColor(context), BlendMode.srcIn),
-                  ),
-                  onTap: () => onTab(3))),
+                  onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const OrdersMapScreen(),
+                        ),
+                      ))),
         ]),
       ],
     );

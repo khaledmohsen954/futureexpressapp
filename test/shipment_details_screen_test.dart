@@ -87,7 +87,17 @@ void main() {
 
     final state = AppState(repository: _MemoryRepository())
       ..locale = const Locale('en', 'US');
-    final shipmentsApi = createTestShipmentsApi();
+    final shipmentsApi = FakeShipmentsApiConsumer(
+      {
+        1: shipmentsResponse(
+          [testOrder('8300', 17)],
+          page: 1,
+          lastPage: 1,
+          total: 1,
+        ),
+      },
+      postResponse: {'success': 1},
+    );
     sl.registerFactory<ShipmentsRepository>(
       () => shipmentsApi.createRepository(),
     );
@@ -116,6 +126,8 @@ void main() {
 
     final firstCard = find.byType(ShipmentCard).first;
     await tester.ensureVisible(firstCard);
+    expect(find.descendant(of: firstCard, matching: find.text('Amount : ')),
+        findsOneWidget);
     final selectedShipmentId =
         tester.widget<ShipmentCard>(firstCard).shipment.id;
     await tester.tap(find.descendant(
@@ -141,14 +153,28 @@ void main() {
     await tester.pumpAndSettle();
     final dynamic onPressed =
         tester.widget<ActionButton>(find.byType(ActionButton).first).onPressed;
-    await onPressed();
+    final deliveryAction = onPressed();
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Confirm collected amount'), findsOneWidget);
+    expect(shipmentsApi.postedPath, isNull);
+
+    await tester.enterText(
+      find.byKey(const Key('collected-amount-input')),
+      '194',
+    );
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('The entered amount does not match the shipment amount'),
+      findsOneWidget,
+    );
     expect(shipmentsApi.postedPath, isNull);
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
+    await deliveryAction;
     expect(find.byType(ShipmentDetailsScreen), findsOneWidget);
     expect(shipmentsApi.postedPath, isNull);
   });

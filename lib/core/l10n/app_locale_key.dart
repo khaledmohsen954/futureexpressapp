@@ -100,6 +100,9 @@ abstract final class AppLocaleKey {
   static const String retry = 'retry';
   static const String other = 'other';
   static const String noShipments = 'noShipments';
+  static const String ordersMap = 'ordersMap';
+  static const String noOrdersWithCoordinates = 'noOrdersWithCoordinates';
+  static const String mapCouldNotLoad = 'mapCouldNotLoad';
   static const String pending = 'pending';
   static const String amount = 'amount';
   static const String confirmCollectedAmount = 'confirmCollectedAmount';
@@ -156,6 +159,7 @@ abstract final class AppLocaleKey {
   static const String shiftInactive = 'shiftInactive';
   static const String save = 'save';
   static const String email = 'email';
+  static const String linkCouldNotOpen = 'linkCouldNotOpen';
   static const String city = 'city';
   static const String riyadh = 'riyadh';
   static const String help = 'help';
@@ -211,6 +215,21 @@ abstract final class AppLocaleKey {
   static const String statusDeliveryFailed = 'statusDeliveryFailed';
   static const String statusInTransit = 'statusInTransit';
   static const String scanQr = 'scanQr';
+  static const String pickupFromCustomer = 'pickupFromCustomer';
+  static const String pickupFromMerchant = 'pickupFromMerchant';
+  static const String scannedOrders = 'scannedOrders';
+  static const String captureConfirmationPhoto = 'captureConfirmationPhoto';
+  static const String retakeConfirmationPhoto = 'retakeConfirmationPhoto';
+  static const String submitPickup = 'submitPickup';
+  static const String removeOrder = 'removeOrder';
+  static const String orderAlreadyScanned = 'orderAlreadyScanned';
+  static const String confirmationPhotoRequired = 'confirmationPhotoRequired';
+  static const String statusImageRequired = 'statusImageRequired';
+  static const String noPickupOrders = 'noPickupOrders';
+  static const String pickupConfirmed = 'pickupConfirmed';
+  static const String scanAnotherOrder = 'scanAnotherOrder';
+  static const String customerPickupScanComplete = 'customerPickupScanComplete';
+  static const String retryScanOrder = 'retryScanOrder';
   static const String customerName = 'customerName';
   static const String paymentMethod = 'paymentMethod';
   static const String address = 'address';
@@ -236,4 +255,8 @@ abstract final class AppLocaleKey {
       'pleasePositionQrWithinFrame';
   static const String qrCode = 'qrCode';
   static const String barcode = 'barcode';
+  static const String showOnMap = 'showOnMap';
+  static const String shipment = 'shipment';
+  static const String verifyShipmentOtp = 'verifyShipmentOtp';
+  static const String shipmentOtpInstruction = 'shipmentOtpInstruction';
 }

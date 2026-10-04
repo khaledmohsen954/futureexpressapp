@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +42,7 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
     required List<String> orderIds,
     required int statusId,
     required String notes,
+    File? failureImage,
   }) async {
     if (state.isLoading) return false;
     emit(ShipmentStatusUpdateState(status: ShipmentStatusUpdateStatus.loading));
@@ -77,6 +80,7 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
       latitude: position.latitude,
       longitude: position.longitude,
       notes: notes,
+      failureImage: failureImage,
     );
     if (isClosed) return false;
 

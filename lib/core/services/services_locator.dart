@@ -20,11 +20,20 @@ Future<void> initDependencies() async {
   sl.registerFactory<ShiftRepository>(
     () => ShiftRepository(sl<ApiConsumer>()),
   );
+  sl.registerFactory<HomeSummaryRepository>(
+    () => HomeSummaryRepository(sl<ApiConsumer>()),
+  );
   sl.registerFactory<DailyReportRepository>(
     () => DailyReportRepository(sl<ApiConsumer>()),
   );
+  sl.registerFactory<AppSettingsRepository>(
+    () => AppSettingsRepository(sl<ApiConsumer>()),
+  );
   sl.registerFactory<BalanceRepository>(
     () => BalanceRepository(sl<ApiConsumer>()),
+  );
+  sl.registerFactory<PickupRepository>(
+    () => PickupRepository(sl<ApiConsumer>()),
   );
   sl.registerFactory<ShipmentsRepository>(
     () => ShipmentsRepository(sl<ApiConsumer>()),

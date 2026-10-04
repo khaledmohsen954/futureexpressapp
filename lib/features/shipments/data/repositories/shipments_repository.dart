@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:futureexpressapp/core/error/failures.dart';
 import 'package:futureexpressapp/core/network/api_consumer.dart';
@@ -132,15 +135,118 @@ class ShipmentsRepository {
     }
   }
 
+  Future<Either<Failure, Unit>> markWhatsappSent(String orderId) async {
+    final normalizedOrderId = orderId.trim();
+    if (normalizedOrderId.isEmpty) {
+      return Left(
+          ServerFailure('An order ID is required to mark WhatsApp as sent.'));
+    }
+
+    final result = await handleDioRequest<dynamic>(
+      request: () => _apiConsumer.post(
+        EndPoints.v3MarkWhatsappSent,
+        body: {'order_id': normalizedOrderId},
+        requiresAuth: true,
+        showToast: false,
+      ),
+    );
+    return result.fold(
+      Left.new,
+      (response) {
+        if (response is! Map) {
+          return Left(ServerFailure(
+            'Invalid mark WhatsApp sent response from server.',
+          ));
+        }
+        final success = response['success'];
+        if (success != true && success != 1 && success != '1') {
+          final message = response['message'];
+          return Left(ServerFailure(
+            message is String && message.isNotEmpty
+                ? message
+                : 'Unable to mark WhatsApp message as sent.',
+          ));
+        }
+        return const Right(unit);
+      },
+    );
+  }
+
+  Future<Either<Failure, Unit>> confirmShipmentOtp({
+    required String orderId,
+    required String otp,
+    required int userId,
+    required File image,
+  }) async {
+    final numericOrderId = int.tryParse(orderId.trim());
+    if (numericOrderId == null) {
+      return Left(ServerFailure(
+        'Order ID must be the numeric database ID to verify delivery.',
+      ));
+    }
+    final normalizedOtp = otp.trim();
+    if (normalizedOtp.isEmpty) {
+      return Left(ServerFailure('A verification code is required.'));
+    }
+    if (image.path.isEmpty || !await image.exists()) {
+      return Left(ServerFailure('A delivery confirmation image is required.'));
+    }
+    final imagePart = await MultipartFile.fromFile(image.path);
+
+    final result = await handleDioRequest<dynamic>(
+      request: () => _apiConsumer.post(
+        EndPoints.v3ConfirmOrderOtp(numericOrderId),
+        body: {
+          'otp': normalizedOtp,
+          'user_id': userId,
+          'image': imagePart,
+        },
+        isFormData: true,
+        requiresAuth: true,
+        showToast: false,
+      ),
+    );
+    return result.fold(
+      Left.new,
+      (response) {
+        if (response is! Map) {
+          return Left(ServerFailure(
+            'Invalid shipment OTP response from server.',
+          ));
+        }
+        final success = response['success'];
+        if (success != true && success != 1 && success != '1') {
+          final message = response['message'];
+          return Left(ServerFailure(
+            message is String && message.isNotEmpty
+                ? message
+                : 'Unable to verify shipment OTP.',
+          ));
+        }
+        return const Right(unit);
+      },
+    );
+  }
+
   Future<Either<Failure, ShipmentStatusUpdateResult>> updateShipmentStatus({
     required List<String> orderIds,
     required int statusId,
     required double latitude,
     required double longitude,
     required String notes,
+    File? failureImage,
   }) async {
     if (orderIds.isEmpty) {
       return Left(ServerFailure('At least one order ID is required.'));
+    }
+    final requiresFailureImage =
+        statusId == ShipmentStatusApi.statusDelivered ||
+            statusId == ShipmentStatusApi.statusDeliveryFailed;
+    if (requiresFailureImage &&
+        (failureImage == null ||
+            failureImage.path.isEmpty ||
+            !await failureImage.exists())) {
+      return Left(ServerFailure('A failure image is required.'));
     }
     final numericOrderIds = <int>[];
     for (final orderId in orderIds) {
@@ -152,7 +258,7 @@ class ShipmentsRepository {
       }
       numericOrderIds.add(numericOrderId);
     }
-    final requestBody = {
+    final requestBody = <String, dynamic>{
       for (var index = 0; index < numericOrderIds.length; index++)
         'order_id[$index]': numericOrderIds[index],
       'status_id': statusId,
@@ -160,10 +266,17 @@ class ShipmentsRepository {
       'longitude': longitude,
       'notes': notes,
     };
+    if (requiresFailureImage) {
+      requestBody['failure_image'] =
+          await MultipartFile.fromFile(failureImage!.path);
+    }
     if (kDebugMode) {
       debugPrint(
         'updateStatus request | method=POST | '
-        'url=${EndPoints.v3ScanAndAssign} | form-data=$requestBody',
+        'url=${EndPoints.v3ScanAndAssign} | form-data=${{
+          ...requestBody,
+          if (failureImage != null) 'failure_image': failureImage.path,
+        }}',
       );
     }
 

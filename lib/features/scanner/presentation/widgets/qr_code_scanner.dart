@@ -130,6 +130,10 @@ class QrCodeScannerState extends State<QrCodeScanner>
     }
   }
 
+  void pauseDetection() {
+    detected.value = true;
+  }
+
   Future<void> stop() async {
     try {
       if (controller.value.isRunning) {

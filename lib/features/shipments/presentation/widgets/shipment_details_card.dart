@@ -12,9 +12,11 @@ class ShipmentDetailsCard extends StatelessWidget {
   const ShipmentDetailsCard({
     super.key,
     this.shipment,
+    required this.onMarkWhatsappSent,
   });
 
   final Shipment? shipment;
+  final Future<bool> Function() onMarkWhatsappSent;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,10 @@ class ShipmentDetailsCard extends StatelessWidget {
       children: [
         _StoreCard(shipment: shipment),
         const SizedBox(height: 12),
-        _CustomerCard(shipment: shipment),
+        _CustomerCard(
+          shipment: shipment,
+          onMarkWhatsappSent: onMarkWhatsappSent,
+        ),
       ],
     );
   }
@@ -82,9 +87,13 @@ class _StoreCard extends StatelessWidget {
 /// Customer card
 /// ---------------------------------------------------------------------------
 class _CustomerCard extends StatelessWidget {
-  const _CustomerCard({this.shipment});
+  const _CustomerCard({
+    this.shipment,
+    required this.onMarkWhatsappSent,
+  });
 
   final Shipment? shipment;
+  final Future<bool> Function() onMarkWhatsappSent;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +146,10 @@ class _CustomerCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 20),
-          _ContactButtons(phone: shipment?.customerPhone),
+          _ContactButtons(
+            shipment: shipment,
+            onMarkWhatsappSent: onMarkWhatsappSent,
+          ),
         ],
       ),
     );
@@ -167,12 +179,26 @@ class _CardContainer extends StatelessWidget {
   }
 }
 
-class _ContactButtons extends StatelessWidget {
-  const _ContactButtons({required this.phone});
+class _ContactButtons extends StatefulWidget {
+  const _ContactButtons({
+    required this.shipment,
+    required this.onMarkWhatsappSent,
+  });
 
-  final String? phone;
+  final Shipment? shipment;
+  final Future<bool> Function() onMarkWhatsappSent;
 
-  bool get _hasPhone => phone != null && phone!.trim().isNotEmpty;
+  @override
+  State<_ContactButtons> createState() => _ContactButtonsState();
+}
+
+class _ContactButtonsState extends State<_ContactButtons> {
+  late bool _whatsappSent = widget.shipment?.whatsappSent ?? false;
+  bool _isSending = false;
+
+  String? get _phone => widget.shipment?.customerPhone;
+
+  bool get _hasPhone => _phone != null && _phone!.trim().isNotEmpty;
 
   /// Keeps digits only and converts local Saudi format (05xxxxxxxx)
   /// to international format (9665xxxxxxxx) for WhatsApp.
@@ -180,18 +206,38 @@ class _ContactButtons extends StatelessWidget {
     var digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
     if (digits.startsWith('00')) digits = digits.substring(2);
     if (digits.startsWith('0')) digits = '966${digits.substring(1)}';
+    if (digits.startsWith('5') && digits.length == 9) digits = '966$digits';
     return digits;
   }
 
   Future<void> _openWhatsapp() async {
-    if (!_hasPhone) return;
-    final uri = Uri.parse('https://wa.me/${_whatsappNumber(phone!)}');
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!_hasPhone || _whatsappSent || _isSending) return;
+    setState(() => _isSending = true);
+    try {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      final message =
+          isAr ? widget.shipment?.whatsappMessageAr : widget.shipment?.whatsappMessageEn;
+      final uri = Uri.https(
+        'wa.me',
+        '/${_whatsappNumber(_phone!.trim())}',
+        message == null || message.isEmpty ? null : {'text': message},
+      );
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) return;
+
+      final markedSent = await widget.onMarkWhatsappSent();
+      if (mounted) setState(() => _whatsappSent = markedSent);
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   Future<void> _call() async {
     if (!_hasPhone) return;
-    final uri = Uri(scheme: 'tel', path: phone!.trim());
+    final uri = Uri(scheme: 'tel', path: _phone!.trim());
     await launchUrl(uri);
   }
 
@@ -202,7 +248,7 @@ class _ContactButtons extends StatelessWidget {
         Expanded(
           flex: 2,
           child: CustomButton(
-            onPressed: _hasPhone ? _openWhatsapp : () {},
+            onPressed: _hasPhone && !_whatsappSent && !_isSending ? _openWhatsapp : () {},
             height: 40,
             color: AppColor.greenColor(context),
             prefixIcon: Padding(

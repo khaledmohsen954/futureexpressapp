@@ -5,8 +5,11 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import '../../features/auth/data/repositories/login_repository.dart';
 import '../../features/auth/data/repositories/logout_repository.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
+import '../../features/pickup/data/repositories/pickup_repository.dart';
 import '../../features/home/data/repositories/shift_repository.dart';
+import '../../features/home/data/repositories/home_summary_repository.dart';
 import '../../features/reports/data/repositories/daily_report_repository.dart';
+import '../../features/support/data/repositories/app_settings_repository.dart';
 import '../../features/shipments/data/repositories/shipments_repository.dart';
 import '../../features/shipments/presentation/cubit/shipments_cubit.dart';
 import '../../features/wallet/data/repositories/balance_repository.dart';

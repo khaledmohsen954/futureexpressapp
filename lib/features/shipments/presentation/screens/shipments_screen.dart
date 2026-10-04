@@ -152,12 +152,15 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
       final matchesSupportedStatus =
           ShipmentStatusApi.supportedStatusIds.contains(shipment.apiStatusId);
       final matchesTab = shipment.apiStatusId == tabStatusId;
-      final searchFields = '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
-              '${shipment.customerAr} ${shipment.customerEn} '
-              '${shipment.addressAr} ${shipment.addressEn} '
-              '${shipment.customerPhone}'
-          .toLowerCase();
-      return matchesSupportedStatus && matchesTab && searchFields.contains(search.toLowerCase());
+      final searchFields =
+          '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
+                  '${shipment.customerAr} ${shipment.customerEn} '
+                  '${shipment.addressAr} ${shipment.addressEn} '
+                  '${shipment.customerPhone}'
+              .toLowerCase();
+      return matchesSupportedStatus &&
+          matchesTab &&
+          searchFields.contains(search.toLowerCase());
     }).toList();
     final visible = filtered;
 
@@ -165,114 +168,128 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
       appBar: AppBar(title: Text(tr(context, AppLocaleKey.shipments))),
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.depth == 0 && notification.metrics.extentAfter < 250) {
+          if (notification.depth == 0 &&
+              notification.metrics.extentAfter < 250) {
             context.read<ShipmentsCubit>().loadNextPage();
           }
           return false;
         },
-        child: PageBody(children: [
-          if (shipmentsState.areStatusesLoading) const LinearProgressIndicator(),
-          if (shipmentsState.statusesError != null)
-            Row(
-              children: [
-                Expanded(child: Text(shipmentsState.statusesError!)),
-                TextButton(
-                  onPressed: cubit.retryStatuses,
-                  child: Text(tr(context, AppLocaleKey.retry)),
+        child: RefreshIndicator(
+          onRefresh: cubit.loadFirstPage,
+          child: PageBody(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              if (shipmentsState.areStatusesLoading)
+                const LinearProgressIndicator(),
+              if (shipmentsState.statusesError != null)
+                Row(
+                  children: [
+                    Expanded(child: Text(shipmentsState.statusesError!)),
+                    TextButton(
+                      onPressed: cubit.retryStatuses,
+                      child: Text(tr(context, AppLocaleKey.retry)),
+                    ),
+                  ],
                 ),
+              // if (shipmentsState.availableStatuses.isNotEmpty)
+              //   Wrap(
+              //     spacing: 8,
+              //     runSpacing: 8,
+              //     crossAxisAlignment: WrapCrossAlignment.center,
+              //     children: [
+              //       OutlinedButton.icon(
+              //         onPressed: () => _showStatusFilter(
+              //           context,
+              //           shipmentsState.availableStatuses,
+              //         ),
+              //         icon: const Icon(Icons.filter_list),
+              //         label: Text(tr(context, AppLocaleKey.filterStatus)),
+              //       ),
+              //       if (selectedStatus != null)
+              //         InputChip(
+              //           label: Text(selectedStatus.localizedTitle(
+              //               Localizations.localeOf(context).languageCode)),
+              //           onDeleted: () => _clearStatusFilter(context),
+              //         ),
+              //     ],
+              //   ),
+              const SizedBox(height: 14),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(_tabLabels.length, (index) {
+                    final selected = selectedTabIndex == index;
+                    return Padding(
+                      key: tabKeys[index],
+                      padding: const EdgeInsetsDirectional.only(end: 7),
+                      child: ChoiceChip(
+                        label: Text(tr(context, _tabLabels[index])),
+                        selected: selected,
+                        selectedColor: AppColors.navy,
+                        labelStyle: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(
+                              color:
+                                  selected ? AppColors.onDark : AppColors.navy,
+                            ),
+                        onSelected: (_) => _selectTab(index),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                  onChanged: (value) => setState(() => search = value.trim()),
+                  decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: tr(context, AppLocaleKey.searchShipments))),
+              const SizedBox(height: 10),
+              if (shipmentsState.status == ShipmentsStatus.loading)
+                const Center(child: CircularProgressIndicator())
+              else if (shipmentsState.status == ShipmentsStatus.failure)
+                Center(
+                  child: Column(
+                    children: [
+                      Text(shipmentsState.errorMessage ??
+                          'Unable to load shipments.'),
+                      TextButton(
+                        onPressed: context.read<ShipmentsCubit>().loadFirstPage,
+                        child: Text(tr(context, AppLocaleKey.retry)),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                Text(
+                    '${visible.length} ${tr(context, AppLocaleKey.shipmentCount)}',
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                ShipmentList(shipments: visible),
+                if (shipmentsState.loadMoreError != null)
+                  Center(
+                    child: TextButton(
+                      onPressed: context.read<ShipmentsCubit>().retryNextPage,
+                      child: Text(tr(context, AppLocaleKey.retry)),
+                    ),
+                  )
+                else if (shipmentsState.isLoadingMore)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (shipmentsState.hasNextPage)
+                  Center(
+                    child: TextButton(
+                      onPressed: context.read<ShipmentsCubit>().loadNextPage,
+                      child: Text(tr(context, AppLocaleKey.loadMore)),
+                    ),
+                  ),
               ],
-            ),
-          // if (shipmentsState.availableStatuses.isNotEmpty)
-          //   Wrap(
-          //     spacing: 8,
-          //     runSpacing: 8,
-          //     crossAxisAlignment: WrapCrossAlignment.center,
-          //     children: [
-          //       OutlinedButton.icon(
-          //         onPressed: () => _showStatusFilter(
-          //           context,
-          //           shipmentsState.availableStatuses,
-          //         ),
-          //         icon: const Icon(Icons.filter_list),
-          //         label: Text(tr(context, AppLocaleKey.filterStatus)),
-          //       ),
-          //       if (selectedStatus != null)
-          //         InputChip(
-          //           label: Text(selectedStatus.localizedTitle(
-          //               Localizations.localeOf(context).languageCode)),
-          //           onDeleted: () => _clearStatusFilter(context),
-          //         ),
-          //     ],
-          //   ),
-          const SizedBox(height: 14),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_tabLabels.length, (index) {
-                final selected = selectedTabIndex == index;
-                return Padding(
-                  key: tabKeys[index],
-                  padding: const EdgeInsetsDirectional.only(end: 7),
-                  child: ChoiceChip(
-                    label: Text(tr(context, _tabLabels[index])),
-                    selected: selected,
-                    selectedColor: AppColors.navy,
-                    labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: selected ? AppColors.onDark : AppColors.navy,
-                        ),
-                    onSelected: (_) => _selectTab(index),
-                  ),
-                );
-              }),
-            ),
+            ],
           ),
-          const SizedBox(height: 14),
-          TextField(
-              onChanged: (value) => setState(() => search = value.trim()),
-              decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: tr(context, AppLocaleKey.searchShipments))),
-          const SizedBox(height: 10),
-          if (shipmentsState.status == ShipmentsStatus.loading)
-            const Center(child: CircularProgressIndicator())
-          else if (shipmentsState.status == ShipmentsStatus.failure)
-            Center(
-              child: Column(
-                children: [
-                  Text(shipmentsState.errorMessage ?? 'Unable to load shipments.'),
-                  TextButton(
-                    onPressed: context.read<ShipmentsCubit>().loadFirstPage,
-                    child: Text(tr(context, AppLocaleKey.retry)),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            Text('${visible.length} ${tr(context, AppLocaleKey.shipmentCount)}',
-                style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            ShipmentList(shipments: visible),
-            if (shipmentsState.loadMoreError != null)
-              Center(
-                child: TextButton(
-                  onPressed: context.read<ShipmentsCubit>().retryNextPage,
-                  child: Text(tr(context, AppLocaleKey.retry)),
-                ),
-              )
-            else if (shipmentsState.isLoadingMore)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (shipmentsState.hasNextPage)
-              Center(
-                child: TextButton(
-                  onPressed: context.read<ShipmentsCubit>().loadNextPage,
-                  child: Text(tr(context, AppLocaleKey.loadMore)),
-                ),
-              ),
-          ],
-        ]),
+        ),
       ),
     );
   }

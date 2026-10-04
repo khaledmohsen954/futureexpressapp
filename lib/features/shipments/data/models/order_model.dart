@@ -45,9 +45,32 @@ class OrderModel {
       amountPaid: _asInt(json['amount_paid']),
       whatsappMessageEn: _asString(json['what_up_massage_en']),
       whatsappMessageAr: _asString(json['what_up_massage_ar']),
+      whatsappSent: _asBool(json['whatsapp_sent']),
       apiStatusId: statusId,
       statusLabel: _asString(json['order_status']),
       statusLabelAr: _asString(json['order_status_ar']),
+      latitude: _coordinate(json, const [
+        'latitude',
+        'lat',
+        'client_latitude',
+        'client_lat',
+        'customer_latitude',
+        'customer_lat',
+        'delivery_latitude',
+        'delivery_lat',
+      ]),
+      longitude: _coordinate(json, const [
+        'longitude',
+        'lng',
+        'lon',
+        'client_longitude',
+        'client_lng',
+        'client_lon',
+        'customer_longitude',
+        'customer_lng',
+        'delivery_longitude',
+        'delivery_lng',
+      ]),
       paymentMethod: _asInt(json['amount_paid']) == 1
           ? PaymentMethod.online
           : PaymentMethod.cash,
@@ -66,9 +89,20 @@ class OrderModel {
   static String? _asString(dynamic value) =>
       value is String && value.isNotEmpty ? value : null;
 
+  static bool _asBool(dynamic value) =>
+      value == true || value == 1 || value == '1' || value == 'true';
+
   static double? _asDouble(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static double? _coordinate(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = _asDouble(json[key]);
+      if (value != null) return value;
+    }
     return null;
   }
 }

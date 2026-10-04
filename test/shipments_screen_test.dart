@@ -17,6 +17,39 @@ class _MemoryRepository implements LocalPreviewRepository {
 }
 
 void main() {
+  testWidgets('pulling down refreshes shipments', (tester) async {
+    final state = AppState(repository: _MemoryRepository())
+      ..locale = const Locale('en', 'US');
+    final shipmentsApi = createTestShipmentsApi();
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en', 'US'),
+        supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
+        home: AppScope(
+          state: state,
+          child: ShipmentsScreen(repository: shipmentsApi.createRepository()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      shipmentsApi.requestedPaths.where((path) => path == EndPoints.v3Orders),
+      hasLength(1),
+    );
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, 400));
+    await tester.pumpAndSettle();
+
+    expect(
+      shipmentsApi.requestedPaths.where((path) => path == EndPoints.v3Orders),
+      hasLength(2),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('only supported API statuses are shown and filtered',
       (tester) async {
     final state = AppState(repository: _MemoryRepository())

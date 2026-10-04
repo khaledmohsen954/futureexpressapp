@@ -9,6 +9,9 @@ coverage/
 .idea/
 .vscode/
 android/local.properties
+android/key.properties
+android/*.jks
+android/*.keystore
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
 # Widget Preview related

@@ -9,12 +9,26 @@ class ActionButton extends StatelessWidget {
       required this.onPressed,
       this.icon,
       this.color = AppColors.red,
-      this.outlined = false});
+      this.outlined = false,
+      this.isLoading = false});
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final Color color;
   final bool outlined;
+  final bool isLoading;
+
+  Widget _icon() => isLoading
+      ? SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: outlined ? color : AppColors.onDark,
+          ),
+        )
+      : Icon(icon ?? Icons.arrow_forward);
+
   @override
   Widget build(BuildContext context) => Container(
       decoration: BoxDecoration(
@@ -32,8 +46,8 @@ class ActionButton extends StatelessWidget {
           height: 51,
           child: outlined
               ? OutlinedButton.icon(
-                  onPressed: onPressed,
-                  icon: Icon(icon ?? Icons.arrow_forward),
+                  onPressed: isLoading ? null : onPressed,
+                  icon: _icon(),
                   label: Text(label),
                   style: OutlinedButton.styleFrom(
                       foregroundColor: color,
@@ -42,8 +56,8 @@ class ActionButton extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14)),
                       alignment: Alignment.center))
               : FilledButton.icon(
-                  onPressed: onPressed,
-                  icon: Icon(icon ?? Icons.arrow_forward),
+                  onPressed: isLoading ? null : onPressed,
+                  icon: _icon(),
                   label: Text(label),
                   style: FilledButton.styleFrom(
                       backgroundColor: color,

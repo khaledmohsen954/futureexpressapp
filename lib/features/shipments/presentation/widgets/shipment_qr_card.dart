@@ -17,8 +17,7 @@ class ShipmentQRCad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = double.tryParse(shipment.amountLabel ?? '') ??
-        shipment.amount.toDouble();
+    final amount = double.tryParse(shipment.amountLabel ?? '') ?? shipment.amount.toDouble();
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -28,42 +27,38 @@ class ShipmentQRCad extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tr(context, AppLocaleKey.responsibleCarrier),
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: AppColors.white),
-                ),
-                Text(
-                  "Future Express",
-                  style: AppTextStyle.textR12B(context),
-                ),
-                Text(
-                  shipment.store ??
-                      shipment.orderContents ??
-                      tr(context, "إسم المتجر - إسم المنتج"),
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: AppColors.white),
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  "${tr(context, AppLocaleKey.assignTime)} : 10:00 AM ",
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: AppColors.white),
-                ),
-              ],
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr(context, AppLocaleKey.responsibleCarrier),
+                    style:
+                        Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  ),
+                  Text(
+                    "Future Express",
+                    style: AppTextStyle.textR12B(context),
+                  ),
+                  Text(
+                    shipment.store ??
+                        shipment.orderContents ??
+                        tr(context, "إسم المتجر - إسم المنتج"),
+                    style:
+                        Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    "${tr(context, AppLocaleKey.assignTime)} : 10:00 AM ",
+                    style:
+                        Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.white),
+                  ),
+                ],
+              ),
             ),
           ),
           Column(
@@ -84,8 +79,7 @@ class ShipmentQRCad extends StatelessWidget {
                     children: [
                       amount > 0
                           ? Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 18.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 18.0),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
@@ -94,8 +88,7 @@ class ShipmentQRCad extends StatelessWidget {
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge
-                                        ?.copyWith(
-                                            color: AppColors.white, height: 2),
+                                        ?.copyWith(color: AppColors.white, height: 2),
                                   ),
                                   Money(
                                     amount,
@@ -117,8 +110,7 @@ class ShipmentQRCad extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 child: Container(
                   padding: EdgeInsets.only(
                     top: 10,
@@ -148,10 +140,8 @@ class ShipmentQRCad extends StatelessWidget {
                       ),
                       Text(
                         "#${shipment.orderId ?? shipment.id}",
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: AppColors.navy),
+                        style:
+                            Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.navy),
                       ),
                     ],
                   ),

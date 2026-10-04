@@ -10,19 +10,21 @@ import 'package:futureexpressapp/features/shipments/data/repositories/shipments_
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
 import '../../../../core/l10n/app_strings.dart';
-import '../../../../core/state/app_state.dart';
 import '../../../../core/theme.dart';
 import '../../../../core/widgets.dart';
 
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({super.key});
+  const ScannerScreen({super.key, this.isActive = true});
+
+  final bool isActive;
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  final GlobalKey<QrCodeScannerState> scannerKey = GlobalKey<QrCodeScannerState>();
+  final GlobalKey<QrCodeScannerState> scannerKey =
+      GlobalKey<QrCodeScannerState>();
   String? _detectedCodeValue;
   bool _isLoading = false;
   bool _scannerActive = true;
@@ -30,20 +32,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = AppScope.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(tr(context, AppLocaleKey.pickup))),
       body: PageBody(children: [
         Text(tr(context, AppLocaleKey.scanInstruction),
-            textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 22),
-        if (_scannerActive)
+        if (widget.isActive && _scannerActive)
           QrCodeScanner(
             key: scannerKey,
             isLoading: _isLoading,
             onScan: (value) async {
               if (_isLoading || !_scannerActive) return;
               setState(() => _isLoading = true);
+              await scannerKey.currentState?.stop();
+              if (!context.mounted) return;
               final result = await _scanOrder(value);
               if (!context.mounted) return;
               if (result == null) {
@@ -53,10 +57,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   _scanFailed = true;
                   _detectedCodeValue = value;
                 });
-                showLocalMessage(context, tr(context, AppLocaleKey.scanOrderFailed));
+                showLocalMessage(
+                    context, tr(context, AppLocaleKey.scanOrderFailed));
                 return;
               }
-              final error = result.fold<String?>((failure) => failure.errMessage, (_) => null);
+              final error = result.fold<String?>(
+                  (failure) => failure.errMessage, (_) => null);
               final shipment = result.fold(
                 (_) => null,
                 (shipment) => shipment,
@@ -72,7 +78,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 return;
               }
               if (shipment == null) {
-                showLocalMessage(context, tr(context, AppLocaleKey.scanOrderFailed));
+                showLocalMessage(
+                    context, tr(context, AppLocaleKey.scanOrderFailed));
                 return;
               }
               await NavigatorMethods.pushNamed(
@@ -85,7 +92,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             title: "",
             showAppBar: false,
           )
-        else
+        else if (widget.isActive)
           SurfaceCard(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
@@ -93,7 +100,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: Column(
                   children: [
                     Icon(
-                      _scanFailed ? Icons.qr_code_2 : Icons.check_circle_outline,
+                      _scanFailed
+                          ? Icons.qr_code_2
+                          : Icons.check_circle_outline,
                       size: 40,
                       color: _scanFailed ? AppColors.red : AppColors.green,
                     ),
@@ -109,7 +118,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ),
           ),
-        if (_isLoading) ...[
+        if (widget.isActive && _isLoading) ...[
           const SizedBox(height: 14),
           const SurfaceCard(
             child: Center(
@@ -119,7 +128,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ),
           ),
-        ] else if (_detectedCodeValue != null) ...[
+        ] else if (widget.isActive && _detectedCodeValue != null) ...[
           const SizedBox(height: 14),
           SurfaceCard(
             child: Row(
@@ -151,7 +160,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ],
         SizedBox(height: 20),
-        if (!_scannerActive)
+        if (widget.isActive && !_scannerActive)
           ActionButton(
             label: tr(
               context,

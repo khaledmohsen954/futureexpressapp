@@ -39,15 +39,19 @@ class AppState extends ChangeNotifier {
   final Map<String, String> failureNotes = {};
   final Set<String> pickedUpIds = {};
 
-  int count(ShipmentStatus status) => _shipments.where((s) => s.status == status).length;
+  int count(ShipmentStatus status) =>
+      _shipments.where((s) => s.status == status).length;
   int get totalCollected => _shipments
       .where((s) => s.status == ShipmentStatus.delivered)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
   int collectedFor(PaymentMethod method) => _shipments
-      .where((s) => s.status == ShipmentStatus.delivered && s.paymentMethod == method)
+      .where((s) =>
+          s.status == ShipmentStatus.delivered && s.paymentMethod == method)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
   int get pendingAmount => _shipments
-      .where((s) => s.status != ShipmentStatus.delivered && s.status != ShipmentStatus.failed)
+      .where((s) =>
+          s.status != ShipmentStatus.delivered &&
+          s.status != ShipmentStatus.failed)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
 
   /// Restore the demo's language, status changes, pickup history and report.
@@ -69,7 +73,8 @@ class AppState extends ChangeNotifier {
         _asBool(userData?['shift_status']) ??
         (saved['onDuty'] == true);
     reportSent = saved['reportSent'] == true;
-    reportNotes = saved['reportNotes'] is String ? saved['reportNotes'] as String : '';
+    reportNotes =
+        saved['reportNotes'] is String ? saved['reportNotes'] as String : '';
     if (saved['pickedUp'] is List) {
       pickedUpIds.addAll((saved['pickedUp'] as List).whereType<String>());
     }
@@ -127,7 +132,8 @@ class AppState extends ChangeNotifier {
     this.name = name;
     this.email = email;
     this.city = city;
-    userProfile = profile ?? UserProfile(name: name, phone: phone, email: email, city: city);
+    userProfile = profile ??
+        UserProfile(name: name, phone: phone, email: email, city: city);
     onDuty = profile?.shiftStatus ?? onDuty;
     profileLoadError = null;
     isCheckingProfile = false;
@@ -150,7 +156,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    final profile = result.fold<UserProfile?>((_) => null, (profile) => profile);
+    final profile =
+        result.fold<UserProfile?>((_) => null, (profile) => profile);
     await setUserProfile(profile!);
     isCheckingProfile = false;
     profileLoadError = null;
@@ -167,6 +174,12 @@ class AppState extends ChangeNotifier {
     onDuty = profile.shiftStatus ?? onDuty;
     await HiveMethods.updateUserData(profile.toCacheMap());
     await HiveMethods.updateShiftStatus(onDuty);
+    notifyListeners();
+  }
+
+  void syncShiftStatus(bool value) {
+    if (onDuty == value) return;
+    onDuty = value;
     notifyListeners();
   }
 
@@ -203,7 +216,9 @@ class AppState extends ChangeNotifier {
   }
 
   void toggleLanguage() {
-    locale = locale.languageCode == 'ar' ? const Locale('en', 'US') : const Locale('ar', 'SA');
+    locale = locale.languageCode == 'ar'
+        ? const Locale('en', 'US')
+        : const Locale('ar', 'SA');
     _changed();
   }
 
@@ -237,7 +252,8 @@ class AppState extends ChangeNotifier {
 
   /// A simulated scan moves the next waiting shipment to in-transit.
   Shipment? pickupNext() {
-    final index = _shipments.indexWhere((s) => s.status == ShipmentStatus.inTransit);
+    final index =
+        _shipments.indexWhere((s) => s.status == ShipmentStatus.inTransit);
     if (index < 0) return null;
     final shipment = _shipments[index];
     _shipments[index] = shipment.copyWith(status: ShipmentStatus.delivered);
@@ -249,9 +265,11 @@ class AppState extends ChangeNotifier {
 
   /// Confirmed delivery updates the wallet and report totals immediately.
   bool deliver(String id) {
-    final index = _shipments.indexWhere((s) => s.id == id && s.status == ShipmentStatus.inTransit);
+    final index = _shipments
+        .indexWhere((s) => s.id == id && s.status == ShipmentStatus.inTransit);
     if (index < 0) return false;
-    _shipments[index] = _shipments[index].copyWith(status: ShipmentStatus.delivered);
+    _shipments[index] =
+        _shipments[index].copyWith(status: ShipmentStatus.delivered);
     reportSent = false;
     _changed();
     return true;
@@ -261,7 +279,8 @@ class AppState extends ChangeNotifier {
     final index = _shipments.indexWhere((shipment) => shipment.id == id);
     if (index >= 0) {
       if (_shipments[index].status == ShipmentStatus.delivered) return;
-      _shipments[index] = _shipments[index].copyWith(status: ShipmentStatus.failed);
+      _shipments[index] =
+          _shipments[index].copyWith(status: ShipmentStatus.failed);
     }
     failureReasons[id] = reasonKey;
     failureNotes[id] = notes;

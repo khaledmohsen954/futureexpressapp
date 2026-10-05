@@ -144,6 +144,14 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.markDelivered: 'تأكيد التسليم',
     AppLocaleKey.deliverySaved: 'تم تحديث حالة الشحنة بنجاح',
     AppLocaleKey.shipmentStatusUpdateFailed: 'تعذر تحديث حالة الشحنة',
+    AppLocaleKey.updateRequiredTitle: 'يتوفر تحديث جديد',
+    AppLocaleKey.updateRequiredMessage:
+        'يرجى تحديث التطبيق للمتابعة واستخدام أحدث إصدار.',
+    AppLocaleKey.updateNow: 'التحديث الآن',
+    AppLocaleKey.noInternetTitle: 'لا يوجد اتصال بالإنترنت',
+    AppLocaleKey.noInternetMessage:
+        'تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.',
+    AppLocaleKey.retryConnection: 'إعادة المحاولة',
     AppLocaleKey.shipmentStatusLocationRequired:
         'يلزم تفعيل الموقع لتحديث حالة الشحنة',
     AppLocaleKey.alreadySent: 'تم إرسال تقرير هذه الوردية',
@@ -403,6 +411,14 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.markDelivered: 'Confirm delivery',
     AppLocaleKey.deliverySaved: 'Shipment status updated successfully',
     AppLocaleKey.shipmentStatusUpdateFailed: 'Unable to update shipment status',
+    AppLocaleKey.updateRequiredTitle: 'Update required',
+    AppLocaleKey.updateRequiredMessage:
+        'Update the app to continue and use the latest version.',
+    AppLocaleKey.updateNow: 'Update now',
+    AppLocaleKey.noInternetTitle: 'No internet connection',
+    AppLocaleKey.noInternetMessage:
+        'Check your internet connection and try again.',
+    AppLocaleKey.retryConnection: 'Try again',
     AppLocaleKey.shipmentStatusLocationRequired:
         'Location access is required to update shipment status',
     AppLocaleKey.alreadySent: 'This shift’s report has been sent',

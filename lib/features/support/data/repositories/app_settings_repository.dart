@@ -13,7 +13,7 @@ class AppSettingsRepository {
     final result = await handleDioRequest<dynamic>(
       request: () => _apiConsumer.get(
         EndPoints.v3AppSettings,
-        requiresAuth: true,
+        requiresAuth: false,
         showToast: false,
       ),
     );

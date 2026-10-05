@@ -54,6 +54,17 @@ and upload for that team. The IPA output is under `build/ios/ipa/`.
 The source tree cannot create store listings or complete account/legal
 declarations. In Google Play Console and App Store Connect, complete and verify:
 
+- The public `/api/v3/App_setting` response must include `android_min_version`
+  and `ios_min_version` in its first settings record. The app compares these
+  minimum supported versions at launch and blocks older builds until they open
+  their store listing. Set either value to `null` to disable enforcement for
+  that platform. When the endpoint is unavailable, the app remains usable and
+  retries the check on the next launch.
+- The update links are Google Play
+  (`https://play.google.com/store/apps/details?id=com.future.express.v3`) and
+  App Store (`https://apps.apple.com/app/id6819175690`); verify both listings
+  are live before requiring an update.
+
 - App listing name, description, category, support contact, and localized
   Arabic/English listing text.
 - Current screenshots and any store-required promotional artwork.

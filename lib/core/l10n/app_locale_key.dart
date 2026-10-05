@@ -195,6 +195,12 @@ abstract final class AppLocaleKey {
   static const String markDelivered = 'markDelivered';
   static const String deliverySaved = 'deliverySaved';
   static const String shipmentStatusUpdateFailed = 'shipmentStatusUpdateFailed';
+  static const String updateRequiredTitle = 'updateRequiredTitle';
+  static const String updateRequiredMessage = 'updateRequiredMessage';
+  static const String updateNow = 'updateNow';
+  static const String noInternetTitle = 'noInternetTitle';
+  static const String noInternetMessage = 'noInternetMessage';
+  static const String retryConnection = 'retryConnection';
   static const String shipmentStatusLocationRequired =
       'shipmentStatusLocationRequired';
   static const String alreadySent = 'alreadySent';

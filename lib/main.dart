@@ -5,7 +5,7 @@ import 'app.dart';
 import 'core/services/services_locator_imports.dart';
 import 'core/state/app_state.dart';
 
-/// Restore local demo progress before mounting the localized Flutter app.
+/// Restore local preferences before mounting the localized Flutter app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();

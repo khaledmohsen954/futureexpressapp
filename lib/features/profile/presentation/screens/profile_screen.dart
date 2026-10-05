@@ -144,17 +144,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _ProfileRow(Icons.work_outline, tr(context, AppLocaleKey.workType),
                   profile.workType.toString()),
             ],
-            if (profile.shiftStatus != null) ...[
-              const Divider(),
-              _ProfileRow(
-                Icons.swap_horiz,
-                tr(context, AppLocaleKey.shiftStatus),
-                tr(
-                  context,
-                  profile.shiftStatus! ? AppLocaleKey.shiftActive : AppLocaleKey.shiftInactive,
-                ),
+            const Divider(),
+            _ProfileRow(
+              Icons.swap_horiz,
+              tr(context, AppLocaleKey.shiftStatus),
+              tr(
+                context,
+                state.onDuty ? AppLocaleKey.shiftActive : AppLocaleKey.shiftInactive,
               ),
-            ],
+            ),
             if (profile.completedShipments != null) ...[
               const Divider(),
               _ProfileRow(

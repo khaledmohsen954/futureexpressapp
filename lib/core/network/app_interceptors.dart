@@ -77,7 +77,8 @@ class AppInterceptors extends Interceptor {
       }
       options.headers['Accept'] = 'application/json';
       options.headers['x-api-key'] = 'reqres-free-v1';
-      options.headers['Accept-Language'] = HiveMethods.getLang();
+      options.headers['Accept-Language'] =
+          HiveMethods.getLang() == 'ar' ? 'ar' : 'en';
 
       final useAuth = options.extra['requiresAuth'] as bool? ?? true;
       final token = HiveMethods.getToken();

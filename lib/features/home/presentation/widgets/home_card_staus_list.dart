@@ -29,9 +29,8 @@ class HomeCardStatusList extends StatelessWidget {
   String _value(int? apiValue, int fallback) =>
       useSummary ? apiValue?.toString() ?? '—' : '$fallback';
 
-  String _collectionValue() => useSummary
-      ? summary?.todayCollected.toString() ?? '—'
-      : '${state.totalCollected}';
+  String _collectionValue() =>
+      useSummary ? summary?.todayCollected.toString() ?? '—' : '${state.totalCollected}';
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +41,7 @@ class HomeCardStatusList extends StatelessWidget {
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.todayShipments),
-                  value:
-                      _value(summary?.todayShipments, state.shipments.length),
+                  value: _value(summary?.todayShipments, state.shipments.length),
                   icon: Icons.inventory_2_outlined,
                   onTap: () => onTab(1))),
           const SizedBox(width: 10),
@@ -90,7 +88,7 @@ class HomeCardStatusList extends StatelessWidget {
           Expanded(
               child: HomeCard(
                   label: tr(context, AppLocaleKey.pickup),
-                  value: "",
+                  value: "PickUP",
                   icon: Icons.inventory_2_sharp,
                   onTap: () => NavigatorMethods.pushNamed(
                         context,

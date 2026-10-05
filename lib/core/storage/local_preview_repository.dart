@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Stores only non-sensitive demo progress and language on the current device.
+/// Stores non-sensitive local preferences and report metadata on this device.
 class LocalPreviewRepository {
   final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
   static const _key = 'future_express_preview_v1';

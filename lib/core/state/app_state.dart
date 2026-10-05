@@ -5,7 +5,6 @@ import '../../features/auth/data/repositories/logout_repository.dart';
 import '../../features/home/data/repositories/shift_repository.dart';
 import '../../features/profile/data/models/user_profile.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
-import '../../features/shipments/data/sample_shipments.dart';
 import '../../features/shipments/domain/shipment.dart';
 import '../cache/hive/hive_methods.dart';
 import '../error/failures.dart';
@@ -17,7 +16,7 @@ class AppState extends ChangeNotifier {
     LocalPreviewRepository? repository,
   }) : _repository = repository ?? LocalPreviewRepository();
   final LocalPreviewRepository _repository;
-  final List<Shipment> _shipments = List.of(sampleShipments);
+  final List<Shipment> _shipments = [];
   Future<void> _pendingWrite = Future.value();
 
   List<Shipment> get shipments => List.unmodifiable(_shipments);
@@ -54,7 +53,7 @@ class AppState extends ChangeNotifier {
           s.status != ShipmentStatus.failed)
       .fold<int>(0, (total, shipment) => total + shipment.amount);
 
-  /// Restore the demo's language, status changes, pickup history and report.
+  /// Restore local preferences and report metadata.
   Future<void> restore() async {
     final saved = await _repository.read();
     final token = HiveMethods.getToken();
@@ -88,18 +87,6 @@ class AppState extends ChangeNotifier {
         if (key is String && value is String) failureNotes[key] = value;
       });
     }
-    if (saved['statuses'] is Map) {
-      final statuses = saved['statuses'] as Map;
-      for (var index = 0; index < _shipments.length; index++) {
-        final statusName = statuses[_shipments[index].id];
-        for (final status in ShipmentStatus.values) {
-          if (status.name == statusName) {
-            _shipments[index] = _shipments[index].copyWith(status: status);
-            break;
-          }
-        }
-      }
-    }
     notifyListeners();
   }
 
@@ -114,7 +101,6 @@ class AppState extends ChangeNotifier {
       'pickedUp': pickedUpIds.toList(),
       'failureReasons': Map.of(failureReasons),
       'failureNotes': Map.of(failureNotes),
-      'statuses': {for (final s in _shipments) s.id: s.status.name},
     };
     _pendingWrite = _pendingWrite.then((_) => _repository.write(snapshot));
   }
@@ -178,8 +164,12 @@ class AppState extends ChangeNotifier {
   }
 
   void syncShiftStatus(bool value) {
-    if (onDuty == value) return;
+    if (onDuty == value && userProfile?.shiftStatus == value) return;
     onDuty = value;
+    final profile = userProfile;
+    if (profile != null) {
+      userProfile = profile.copyWith(shiftStatus: value);
+    }
     notifyListeners();
   }
 
@@ -229,16 +219,33 @@ class AppState extends ChangeNotifier {
     if (isUpdatingDuty || onDuty == value) return const Right(unit);
     final previousValue = onDuty;
     onDuty = value;
+    final previousProfileStatus = userProfile?.shiftStatus;
+    final profile = userProfile;
+    if (profile != null) {
+      userProfile = profile.copyWith(shiftStatus: value);
+    }
     isUpdatingDuty = true;
     _changed();
     await HiveMethods.updateShiftStatus(value);
+    if (userProfile != null) {
+      await HiveMethods.updateUserData(userProfile!.toCacheMap());
+    }
     try {
       final result = await repository.updateShift(value);
       final failure = result.fold<Failure?>((failure) => failure, (_) => null);
       if (failure != null) {
         onDuty = previousValue;
+        final currentProfile = userProfile;
+        if (currentProfile != null) {
+          userProfile = currentProfile.copyWith(
+            shiftStatus: previousProfileStatus ?? previousValue,
+          );
+        }
         _changed();
         await HiveMethods.updateShiftStatus(previousValue);
+        if (userProfile != null) {
+          await HiveMethods.updateUserData(userProfile!.toCacheMap());
+        }
         return result;
       }
       reportSent = false;
@@ -250,38 +257,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// A simulated scan moves the next waiting shipment to in-transit.
-  Shipment? pickupNext() {
-    final index =
-        _shipments.indexWhere((s) => s.status == ShipmentStatus.inTransit);
-    if (index < 0) return null;
-    final shipment = _shipments[index];
-    _shipments[index] = shipment.copyWith(status: ShipmentStatus.delivered);
-    pickedUpIds.add(shipment.id);
-    reportSent = false;
-    _changed();
-    return _shipments[index];
-  }
-
-  /// Confirmed delivery updates the wallet and report totals immediately.
-  bool deliver(String id) {
-    final index = _shipments
-        .indexWhere((s) => s.id == id && s.status == ShipmentStatus.inTransit);
-    if (index < 0) return false;
-    _shipments[index] =
-        _shipments[index].copyWith(status: ShipmentStatus.delivered);
-    reportSent = false;
-    _changed();
-    return true;
-  }
-
   void fail(String id, String reasonKey, String notes) {
-    final index = _shipments.indexWhere((shipment) => shipment.id == id);
-    if (index >= 0) {
-      if (_shipments[index].status == ShipmentStatus.delivered) return;
-      _shipments[index] =
-          _shipments[index].copyWith(status: ShipmentStatus.failed);
-    }
     failureReasons[id] = reasonKey;
     failureNotes[id] = notes;
     reportSent = false;

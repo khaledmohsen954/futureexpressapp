@@ -148,6 +148,16 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
     //     .toList(growable: false);
     // final selectedStatus = selectedStatuses.isEmpty ? null : selectedStatuses.first;
     final tabStatusId = _tabStatusIds[selectedTabIndex];
+    final tabCounts = List<int>.filled(_tabStatusIds.length, 0, growable: false);
+    for (final shipment in shipmentsState.shipments) {
+      final statusId = shipment.apiStatusId;
+      if (statusId != null) {
+        final statusIndex = _tabStatusIds.indexOf(statusId);
+        if (statusIndex != -1) {
+          tabCounts[statusIndex]++;
+        }
+      }
+    }
     final filtered = shipmentsState.shipments.where((shipment) {
       final matchesSupportedStatus =
           ShipmentStatusApi.supportedStatusIds.contains(shipment.apiStatusId);
@@ -219,19 +229,49 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                 child: Row(
                   children: List.generate(_tabLabels.length, (index) {
                     final selected = selectedTabIndex == index;
+                    final count = tabCounts[index];
                     return Padding(
                       key: tabKeys[index],
                       padding: const EdgeInsetsDirectional.only(end: 7),
                       child: ChoiceChip(
-                        label: Text(tr(context, _tabLabels[index])),
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(tr(context, _tabLabels[index])),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? AppColors.onDark.withValues(alpha: 0.2)
+                                    : AppColors.navy.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                count.toString(),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: selected
+                                          ? AppColors.onDark
+                                          : AppColors.navy,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
                         selected: selected,
                         selectedColor: AppColors.navy,
                         labelStyle: Theme.of(context)
                             .textTheme
                             .labelLarge
                             ?.copyWith(
-                              color:
-                                  selected ? AppColors.onDark : AppColors.navy,
+                              color: selected ? AppColors.onDark : AppColors.navy,
                             ),
                         onSelected: (_) => _selectTab(index),
                       ),

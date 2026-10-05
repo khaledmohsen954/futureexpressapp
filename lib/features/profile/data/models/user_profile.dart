@@ -83,6 +83,7 @@ class UserProfile {
     String? phone,
     String? avatar,
     String? localAvatarPath,
+    bool? shiftStatus,
   }) =>
       UserProfile(
         id: id,
@@ -90,7 +91,7 @@ class UserProfile {
         name: name ?? this.name,
         phone: phone ?? this.phone,
         email: email ?? this.email,
-        shiftStatus: shiftStatus,
+        shiftStatus: shiftStatus ?? this.shiftStatus,
         city: city,
         workType: workType,
         successRate: successRate,

@@ -22,7 +22,7 @@ class ProfileSplashScreen extends StatelessWidget {
               children: [
                 Image.asset(
                   AppImages.fexLogo1024_500NoBG,
-                  width: 230,
+                  width: double.infinity,
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 36),

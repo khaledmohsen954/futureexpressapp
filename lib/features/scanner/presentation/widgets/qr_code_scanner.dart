@@ -118,16 +118,29 @@ class QrCodeScannerState extends State<QrCodeScanner>
     try {
       await Future.sync(() => widget.onScan(raw));
     } finally {
-      if (mounted) isLoading.value = false;
+      if (mounted) {
+        detected.value = false;
+        isLoading.value = false;
+
+        try {
+          if (controller.value.isRunning) {
+            await controller.stop();
+          }
+          await controller.start();
+        } catch (e) {
+          debugPrint('Error resetting scanner after scan: $e');
+        }
+      }
     }
   }
 
   Future<void> restart() async {
     detected.value = false;
     isLoading.value = false;
-    if (!controller.value.isRunning) {
-      await controller.start();
+    if (controller.value.isRunning) {
+      await controller.stop();
     }
+    await controller.start();
   }
 
   void pauseDetection() {

@@ -314,8 +314,8 @@ class _PickupScreenState extends State<PickupScreen> {
                 ),
               )
             else
-              for (final order in _currentOrders)
-                _merchantOrderCard(context, order),
+              for (var index = 0; index < _currentOrders.length; index++)
+                _merchantOrderCard(context, _currentOrders[index], index),
           ],
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -382,6 +382,7 @@ class _PickupScreenState extends State<PickupScreen> {
   Widget _merchantOrderCard(
     BuildContext context,
     _ScannedPickupOrder order,
+    int index,
   ) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -393,7 +394,7 @@ class _PickupScreenState extends State<PickupScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  order.id,
+                  '${index + 1}. ${order.id}',
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),

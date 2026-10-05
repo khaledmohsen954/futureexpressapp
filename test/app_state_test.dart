@@ -15,34 +15,31 @@ class MemoryRepository implements LocalPreviewRepository {
 }
 
 void main() {
-  test('pickup and delivery update shipment counts and wallet total', () {
+  test('starts without sample shipments', () {
     final state = AppState(repository: MemoryRepository());
-    expect(state.count(ShipmentStatus.pending), 2);
-    expect(state.totalCollected, 150);
-    expect(state.pickupNext()?.id, 'FX-2049');
-    expect(state.count(ShipmentStatus.pending), 1);
-    expect(state.count(ShipmentStatus.inTransit), 2);
-    expect(state.deliver('FX-2049'), isTrue);
-    expect(state.count(ShipmentStatus.delivered), 2);
-    expect(state.totalCollected, 235);
-    expect(state.collectedFor(PaymentMethod.online), 235);
+
+    expect(state.shipments, isEmpty);
+    expect(state.count(ShipmentStatus.inTransit), 0);
+    expect(state.count(ShipmentStatus.delivered), 0);
+    expect(state.totalCollected, 0);
+    expect(state.collectedFor(PaymentMethod.online), 0);
     expect(state.collectedFor(PaymentMethod.cash), 0);
     state.dispose();
   });
 
-  test('language, failed delivery and sent report survive restore', () async {
+  test('language, failure details and sent report survive restore', () async {
     final repository = MemoryRepository();
     final state = AppState(repository: repository);
     state.toggleLanguage();
-    state.fail('FX-2051', 'reasonAddress', 'Apartment 2');
+    state.fail('shipment-123', 'reasonAddress', 'Apartment 2');
     state.sendReport('Done');
     await Future<void>.delayed(Duration.zero);
 
     final restored = AppState(repository: repository);
     await restored.restore();
     expect(restored.locale.languageCode, 'en');
-    expect(restored.count(ShipmentStatus.failed), 1);
-    expect(restored.failureReasons['FX-2051'], 'reasonAddress');
+    expect(restored.shipments, isEmpty);
+    expect(restored.failureReasons['shipment-123'], 'reasonAddress');
     expect(restored.reportSent, isTrue);
     expect(restored.reportNotes, 'Done');
     state.dispose();

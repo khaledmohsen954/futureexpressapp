@@ -55,6 +55,24 @@ void main() {
     ]);
   });
 
+  test('parses server totals for shipment status tabs', () async {
+    final api = FakeShipmentsApiConsumer({
+      1: shipmentsResponse(
+        [testOrder('in-transit', 17)],
+        page: 1,
+        lastPage: 1,
+        statusCounts: {220: 21, 34: 5, 17: 36},
+      ),
+    });
+
+    final result = await api.createRepository().getShipments();
+
+    result.fold(
+      (_) => fail('Expected shipments to load.'),
+      (page) => expect(page.statusCounts, {220: 21, 34: 5, 17: 36}),
+    );
+  });
+
   test('sends numeric database order IDs to scan-and-assign', () async {
     final api = FakeShipmentsApiConsumer(
       const {},

@@ -96,6 +96,7 @@ abstract final class AppLocaleKey {
   static const String pendingTab = 'pendingTab';
   static const String completedTab = 'completedTab';
   static const String shipmentCount = 'shipmentCount';
+  static const String shipmentPackageCount = 'shipmentPackageCount';
   static const String loadMore = 'loadMore';
   static const String retry = 'retry';
   static const String other = 'other';
@@ -265,4 +266,18 @@ abstract final class AppLocaleKey {
   static const String shipment = 'shipment';
   static const String verifyShipmentOtp = 'verifyShipmentOtp';
   static const String shipmentOtpInstruction = 'shipmentOtpInstruction';
+  static const String whatsappSentConfirmationTitle =
+      'whatsappSentConfirmationTitle';
+  static const String whatsappSentConfirmationMessage =
+      'whatsappSentConfirmationMessage';
+  static const String whatsappMessageUnavailable = 'whatsappMessageUnavailable';
+  static const String openWhatsappFailed = 'openWhatsappFailed';
+  static const String whatsappContactPermissionRequired =
+      'whatsappContactPermissionRequired';
+  static const String whatsappContactSaveFailed = 'whatsappContactSaveFailed';
+  static const String whatsappNotSent = 'whatsappNotSent';
+  static const String whatsappIHaveSent = 'whatsappIHaveSent';
+  static const String verifyShipment = 'verifyShipment';
+  static const String verifyShipmentInstruction = 'verifyShipmentInstruction';
+  static const String shipmentQrMismatch = 'shipmentQrMismatch';
 }

@@ -1,7 +1,7 @@
 name: futureexpressapp
 description: Future Express courier and shipment management app.
 publish_to: none
-version: 1.0.6+7
+version: 1.0.7+8
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -61,6 +61,7 @@ dependencies:
 
   flutter_localizations:
     sdk: flutter
+  flutter_contacts: ^2.6.0
 
 dev_dependencies:
   flutter_test:

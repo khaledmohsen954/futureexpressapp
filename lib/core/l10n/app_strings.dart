@@ -44,6 +44,7 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.pendingTab: 'المعلقة',
     AppLocaleKey.completedTab: 'المكتملة',
     AppLocaleKey.shipmentCount: 'شحنات',
+    AppLocaleKey.shipmentPackageCount: 'عدد القطع',
     AppLocaleKey.loadMore: 'تحميل المزيد',
     AppLocaleKey.retry: 'إعادة المحاولة',
     AppLocaleKey.other: 'حالة أخرى',
@@ -259,6 +260,23 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.storePhone: 'هاتف المتجر',
     AppLocaleKey.storeEmail: 'بريد المتجر',
     AppLocaleKey.scanOrderFailed: 'تعذر العثور على الشحنة الممسوحة',
+    AppLocaleKey.whatsappSentConfirmationTitle: 'تأكيد إرسال رسالة واتساب',
+    AppLocaleKey.whatsappSentConfirmationMessage:
+        'بعد إرسال الرسالة الجاهزة في واتساب، ارجع إلى التطبيق وأكد الإرسال.',
+    AppLocaleKey.whatsappMessageUnavailable:
+        'رسالة واتساب غير متوفرة لهذه الشحنة.',
+    AppLocaleKey.openWhatsappFailed: 'تعذر فتح واتساب.',
+    AppLocaleKey.whatsappContactPermissionRequired:
+        'يلزم السماح بالوصول إلى جهات الاتصال لحفظ رقم الشحنة كاسم للعميل في واتساب.',
+    AppLocaleKey.whatsappContactSaveFailed:
+        'تعذر حفظ رقم الشحنة كاسم لجهة الاتصال.',
+    AppLocaleKey.whatsappNotSent: 'لم أرسلها',
+    AppLocaleKey.whatsappIHaveSent: 'أرسلتها',
+    AppLocaleKey.verifyShipment: 'تأكيد الشحنة',
+    AppLocaleKey.verifyShipmentInstruction:
+        'امسح رمز الشحنة للتأكد من مطابقة رقمها قبل تصوير التسليم',
+    AppLocaleKey.shipmentQrMismatch:
+        'هذه ليست الشحنة نفسها. يرجى مسح رمز الشحنة الصحيح.',
     AppLocaleKey.openLocationOnMap: 'فتح الموقع علي الخريطة',
     AppLocaleKey.contactWithWhatsapp: 'تواصل عبر واتساب',
     AppLocaleKey.qrCode: 'رمز QR',
@@ -309,6 +327,7 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.pendingTab: 'Pending',
     AppLocaleKey.completedTab: 'Completed',
     AppLocaleKey.shipmentCount: 'shipments',
+    AppLocaleKey.shipmentPackageCount: 'Package count',
     AppLocaleKey.loadMore: 'Load more',
     AppLocaleKey.retry: 'Retry',
     AppLocaleKey.other: 'Other',
@@ -528,6 +547,23 @@ const _copy = <String, Map<String, String>>{
     AppLocaleKey.storePhone: 'Store phone',
     AppLocaleKey.storeEmail: 'Store email',
     AppLocaleKey.scanOrderFailed: 'Could not find the scanned shipment',
+    AppLocaleKey.whatsappSentConfirmationTitle: 'Confirm WhatsApp message',
+    AppLocaleKey.whatsappSentConfirmationMessage:
+        'After sending the prefilled message in WhatsApp, return here and confirm.',
+    AppLocaleKey.whatsappMessageUnavailable:
+        'No WhatsApp message is available for this shipment.',
+    AppLocaleKey.openWhatsappFailed: 'Could not open WhatsApp.',
+    AppLocaleKey.whatsappContactPermissionRequired:
+        'Contacts permission is required to save the shipment number as the customer name in WhatsApp.',
+    AppLocaleKey.whatsappContactSaveFailed:
+        'Could not save the shipment number as the contact name.',
+    AppLocaleKey.whatsappNotSent: 'Not sent',
+    AppLocaleKey.whatsappIHaveSent: 'I sent it',
+    AppLocaleKey.verifyShipment: 'Verify shipment',
+    AppLocaleKey.verifyShipmentInstruction:
+        'Scan the shipment QR code to verify its number before taking the delivery photo.',
+    AppLocaleKey.shipmentQrMismatch:
+        'This is not the same shipment. Please scan the correct shipment.',
     AppLocaleKey.openLocationOnMap: 'Open Location On Map',
     AppLocaleKey.contactWithWhatsapp: 'Contact With Whatsapp',
     AppLocaleKey.qrCode: 'QR Code',

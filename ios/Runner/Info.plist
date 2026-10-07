@@ -30,6 +30,8 @@
 	<string>Your location is required to update shipment delivery status.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan shipment barcodes and take pickup or delivery confirmation photos.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Save the shipment order number as the customer contact name for WhatsApp.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

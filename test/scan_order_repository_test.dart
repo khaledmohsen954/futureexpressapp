@@ -40,6 +40,7 @@ void main() {
           'amount_paid': 0,
           'what_up_massage_en': 'English message',
           'what_up_massage_ar': 'رسالة عربية',
+          'whatsapp_sent': false,
         },
       ],
     };
@@ -64,6 +65,7 @@ void main() {
     expect(shipment.amountLabel, '10.00');
     expect(shipment.status, ShipmentStatus.inTransit);
     expect(shipment.whatsappMessageEn, 'English message');
+    expect(shipment.whatsappSent, isFalse);
   });
 
   test('returns a server error when scan response contains no order', () async {

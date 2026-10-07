@@ -13,8 +13,15 @@ import '../cubit/shipments_cubit.dart';
 
 /// Figma 11:184 — expandable card stays in sync with shipment changes.
 class ShipmentCard extends StatefulWidget {
-  const ShipmentCard({super.key, required this.shipment});
+  const ShipmentCard({
+    super.key,
+    required this.shipment,
+    this.sequenceNumber,
+  });
+
   final Shipment shipment;
+  final int? sequenceNumber;
+
   @override
   State<ShipmentCard> createState() => _ShipmentCardState();
 }
@@ -42,6 +49,20 @@ class _ShipmentCardState extends State<ShipmentCard> {
       child: SurfaceCard(
           child: Column(children: [
         Row(children: [
+          if (widget.sequenceNumber != null) ...[
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: AppColors.navy,
+              child: Text(
+                widget.sequenceNumber.toString(),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: AppColors.onDark),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           const Icon(Icons.inventory_2_outlined, color: AppColors.red),
           const SizedBox(width: 8),
           Text('#${shipment.orderId ?? shipment.id}',
@@ -60,6 +81,13 @@ class _ShipmentCardState extends State<ShipmentCard> {
         _Info(Icons.person_outline,
             english ? shipment.customerEn : shipment.customerAr),
         const SizedBox(height: 8),
+        if (shipment.numberCount != null) ...[
+          _Info(
+            Icons.inventory_2_outlined,
+            '${tr(context, AppLocaleKey.shipmentPackageCount)}: ${shipment.numberCount}',
+          ),
+          const SizedBox(height: 8),
+        ],
         _Info(Icons.location_on_outlined,
             english ? shipment.addressEn : shipment.addressAr),
         const SizedBox(height: 8),

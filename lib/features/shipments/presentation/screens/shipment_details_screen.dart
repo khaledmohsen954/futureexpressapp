@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,12 +17,13 @@ import 'package:futureexpressapp/core/utils/navigator_methods.dart';
 import 'package:futureexpressapp/core/widgets/action_button.dart';
 import 'package:futureexpressapp/core/widgets/messages.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
+import 'package:futureexpressapp/features/scanner/presentation/widgets/qr_code_scanner.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipment_status_cubit.dart';
-import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_details_card.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/capture_status_image.dart';
-import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_qr_card.dart';
 import 'package:futureexpressapp/features/shipments/presentation/screens/verify_shipment_otp_screen.dart';
+import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_details_card.dart';
+import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_qr_card.dart';
 
 class ShipmentDetailsScreen extends StatefulWidget {
   const ShipmentDetailsScreen({super.key, required this.shipment});
@@ -34,7 +35,42 @@ class ShipmentDetailsScreen extends StatefulWidget {
 }
 
 class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
+  late Shipment _shipment = widget.shipment;
   bool _isSubmittingDelivery = false;
+
+  @override
+  void didUpdateWidget(covariant ShipmentDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shipment != widget.shipment) {
+      _shipment = widget.shipment;
+    }
+  }
+
+  Future<bool> _markWhatsappSent() async {
+    final repository = sl<ShipmentsRepository>();
+    final orderId = _shipment.orderId ?? _shipment.id;
+    final result = await repository.markWhatsappSent(orderId);
+    if (!mounted) return false;
+
+    final markedSent = result.fold(
+      (failure) {
+        showLocalMessage(context, failure.errMessage);
+        return false;
+      },
+      (_) => true,
+    );
+    if (!markedSent) return false;
+
+    final refreshed = await repository.scanOrder(orderId);
+    if (!mounted) return true;
+    refreshed.fold(
+      (failure) => showLocalMessage(context, failure.errMessage),
+      (shipment) => setState(
+        () => _shipment = shipment.copyWith(whatsappSent: true),
+      ),
+    );
+    return true;
+  }
 
   Future<void> _submitDelivery() async {
     if (_isSubmittingDelivery) return;
@@ -44,6 +80,18 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
     setState(() => _isSubmittingDelivery = true);
     File? failureImage;
     try {
+      final scannedOrderNumber = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => const _ShipmentQrScanScreen(),
+        ),
+      );
+      if (!mounted || scannedOrderNumber == null) return;
+      final expectedOrderNumber = (_shipment.orderId ?? _shipment.id).trim();
+      if (scannedOrderNumber.trim() != expectedOrderNumber) {
+        showLocalMessage(context, tr(context, AppLocaleKey.shipmentQrMismatch));
+        return;
+      }
+
       failureImage = await captureStatusImage(context);
       if (!mounted || failureImage == null) return;
       final userId = AppScope.of(context).clientId;
@@ -55,7 +103,7 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
       final otpVerified = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => VerifyShipmentOtpScreen(
-            orderId: widget.shipment.id,
+            orderId: _shipment.id,
             userId: userId,
             image: failureImage!,
             repository: sl<ShipmentsRepository>(),
@@ -67,7 +115,7 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
           await LocationRequirement.ensureForShipmentStatus(context);
       if (!mounted || !locationReady) return;
       final success = await context.read<ShipmentStatusCubit>().updateStatus(
-        orderIds: [widget.shipment.id],
+        orderIds: [_shipment.id],
         statusId: ShipmentStatusApi.statusDelivered,
         notes: '',
         failureImage: failureImage,
@@ -97,8 +145,8 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
   }
 
   Future<bool> _confirmCollectedAmount(BuildContext context) async {
-    final amount = double.tryParse(widget.shipment.amountLabel ?? '') ??
-        widget.shipment.amount.toDouble();
+    final amount = double.tryParse(_shipment.amountLabel ?? '') ??
+        _shipment.amount.toDouble();
     if (amount <= 0) return true;
 
     return await showDialog<bool>(
@@ -120,25 +168,14 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              ShipmentQRCad(shipment: widget.shipment),
+              ShipmentQRCad(shipment: _shipment),
               const SizedBox(height: 15),
               ShipmentDetailsCard(
-                shipment: widget.shipment,
-                onMarkWhatsappSent: () async {
-                  final result = await sl<ShipmentsRepository>()
-                      .markWhatsappSent(widget.shipment.id);
-                  if (!context.mounted) return false;
-                  return result.fold(
-                    (failure) {
-                      showLocalMessage(context, failure.errMessage);
-                      return false;
-                    },
-                    (_) => true,
-                  );
-                },
+                shipment: _shipment,
+                onMarkWhatsappSent: _markWhatsappSent,
               ),
               const SizedBox(height: 15),
-              if ((widget.shipment.apiStatusId ==
+              if ((_shipment.apiStatusId ==
                   ShipmentStatusApi.statusInTransit)) ...[
                 ActionButton(
                   label: tr(context, AppLocaleKey.markDelivered),
@@ -162,7 +199,7 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
                           final success = await NavigatorMethods.pushNamed(
                             context,
                             RoutesName.deliveryFailureScreen,
-                            arguments: widget.shipment,
+                            arguments: _shipment,
                           );
                           if (success == true && context.mounted) {
                             Navigator.pop(context, true);
@@ -174,17 +211,15 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
                   height: 40,
                   color: AppColor.secondAppColor(context),
                   text: Localizations.localeOf(context).languageCode == 'ar'
-                      ? widget.shipment.statusLabelAr ??
-                          tr(context, widget.shipment.status.name)
-                      : widget.shipment.statusLabel ??
-                          tr(context, widget.shipment.status.name),
+                      ? _shipment.statusLabelAr ??
+                          tr(context, _shipment.status.name)
+                      : _shipment.statusLabel ??
+                          tr(context, _shipment.status.name),
                 )
               ],
-              if (AppScope.of(context)
-                  .failureReasons
-                  .containsKey(widget.shipment.id))
+              if (AppScope.of(context).failureReasons.containsKey(_shipment.id))
                 Text(
-                  '${tr(context, AppScope.of(context).failureReasons[widget.shipment.id]!)} ${AppScope.of(context).failureNotes[widget.shipment.id] ?? ''}',
+                  '${tr(context, AppScope.of(context).failureReasons[_shipment.id]!)} ${AppScope.of(context).failureNotes[_shipment.id] ?? ''}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],
@@ -193,6 +228,36 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
       ),
     );
   }
+}
+
+class _ShipmentQrScanScreen extends StatelessWidget {
+  const _ShipmentQrScanScreen();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(
+          title: Text(tr(context, AppLocaleKey.verifyShipment)),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                tr(context, AppLocaleKey.verifyShipmentInstruction),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 16),
+              QrCodeScanner(
+                title: '',
+                description: '',
+                showAppBar: false,
+                onScan: (value) => Navigator.of(context).pop(value),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _CollectedAmountDialog extends StatefulWidget {

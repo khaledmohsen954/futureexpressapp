@@ -1,6 +1,32 @@
 import 'package:futureexpressapp/core/network/api_consumer.dart';
 import 'package:futureexpressapp/core/network/end_points.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
+import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
+
+class FakeDailyShipmentSequenceStore implements ShipmentSequenceStore {
+  final Map<String, int> _sequences = {};
+
+  @override
+  Future<Map<String, int>> assignNumbers(
+    Iterable<Shipment> shipments, {
+    DateTime? date,
+  }) async {
+    final unnumbered = shipments
+        .where((shipment) => !_sequences.containsKey(shipment.id))
+        .toList()
+      ..sort(DailyShipmentSequenceStore.compareByShipmentNumber);
+    var nextNumber = _sequences.values.fold<int>(
+          0,
+          (highest, number) => number > highest ? number : highest,
+        ) +
+        1;
+    for (final shipment in unnumbered) {
+      _sequences[shipment.id] = nextNumber++;
+    }
+    return Map.unmodifiable(_sequences);
+  }
+}
 
 class FakeShipmentsApiConsumer implements ApiConsumer {
   FakeShipmentsApiConsumer(
@@ -123,9 +149,12 @@ Map<String, dynamic> shipmentsResponse(
   required int page,
   required int lastPage,
   int? total,
+  Map<int, int> statusCounts = const {},
 }) =>
     {
       'success': 1,
+      for (final entry in statusCounts.entries)
+        'status_${entry.key}': entry.value,
       'orders': {'data': orders},
       'pagination': {
         'current_page': page,

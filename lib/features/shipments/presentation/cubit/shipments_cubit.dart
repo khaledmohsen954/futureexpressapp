@@ -11,6 +11,7 @@ class ShipmentsState extends Equatable {
     this.status = ShipmentsStatus.initial,
     this.shipments = const [],
     this.availableStatuses = const [],
+    this.statusCounts = const {},
     this.areStatusesLoading = false,
     this.statusesError,
     this.page = 0,
@@ -24,6 +25,7 @@ class ShipmentsState extends Equatable {
   final ShipmentsStatus status;
   final List<Shipment> shipments;
   final List<ShipmentStatusFilter> availableStatuses;
+  final Map<int, int> statusCounts;
   final bool areStatusesLoading;
   final String? statusesError;
   final int page;
@@ -41,6 +43,7 @@ class ShipmentsState extends Equatable {
         status,
         shipments,
         availableStatuses,
+        statusCounts,
         areStatusesLoading,
         statusesError,
         page,
@@ -116,6 +119,7 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
         status: ShipmentsStatus.success,
         shipments: List.unmodifiable(page.shipments),
         availableStatuses: state.availableStatuses,
+        statusCounts: Map.unmodifiable(page.statusCounts),
         areStatusesLoading: state.areStatusesLoading,
         statusesError: state.statusesError,
         page: page.currentPage,
@@ -153,6 +157,10 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
           status: ShipmentsStatus.success,
           shipments: List.unmodifiable([...state.shipments, ...page.shipments]),
           availableStatuses: state.availableStatuses,
+          statusCounts: Map.unmodifiable({
+            ...state.statusCounts,
+            ...page.statusCounts,
+          }),
           areStatusesLoading: state.areStatusesLoading,
           statusesError: state.statusesError,
           page: page.currentPage,
@@ -179,6 +187,7 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
     bool? isLoadingMore,
     String? loadMoreError,
     List<ShipmentStatusFilter>? availableStatuses,
+    Map<int, int>? statusCounts,
     bool? areStatusesLoading,
     String? statusesError,
     bool clearStatusesError = false,
@@ -188,6 +197,7 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
         status: status ?? state.status,
         shipments: state.shipments,
         availableStatuses: availableStatuses ?? state.availableStatuses,
+        statusCounts: statusCounts ?? state.statusCounts,
         areStatusesLoading: areStatusesLoading ?? state.areStatusesLoading,
         statusesError:
             clearStatusesError ? null : statusesError ?? state.statusesError,

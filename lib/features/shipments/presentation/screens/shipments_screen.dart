@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments_cubit.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_list.dart';
@@ -12,9 +13,14 @@ import '../../domain/shipment.dart';
 
 /// Figma 11:78 and 11:131 — filters react to live shipment state and search.
 class ShipmentsScreen extends StatefulWidget {
-  const ShipmentsScreen({super.key, this.repository});
+  const ShipmentsScreen({
+    super.key,
+    this.repository,
+    this.sequenceStore,
+  });
 
   final ShipmentsRepository? repository;
+  final ShipmentSequenceStore? sequenceStore;
 
   @override
   State<ShipmentsScreen> createState() => _ShipmentsScreenState();
@@ -148,7 +154,8 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
     //     .toList(growable: false);
     // final selectedStatus = selectedStatuses.isEmpty ? null : selectedStatuses.first;
     final tabStatusId = _tabStatusIds[selectedTabIndex];
-    final tabCounts = List<int>.filled(_tabStatusIds.length, 0, growable: false);
+    final tabCounts =
+        List<int>.filled(_tabStatusIds.length, 0, growable: false);
     for (final shipment in shipmentsState.shipments) {
       final statusId = shipment.apiStatusId;
       if (statusId != null) {
@@ -158,19 +165,20 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
         }
       }
     }
-    final filtered = shipmentsState.shipments.where((shipment) {
+    final matchingTab = shipmentsState.shipments.where((shipment) {
       final matchesSupportedStatus =
           ShipmentStatusApi.supportedStatusIds.contains(shipment.apiStatusId);
       final matchesTab = shipment.apiStatusId == tabStatusId;
+      return matchesSupportedStatus && matchesTab;
+    }).toList();
+    final filtered = matchingTab.where((shipment) {
       final searchFields =
           '${shipment.id} ${shipment.orderId ?? ''} ${shipment.store ?? ''} '
                   '${shipment.customerAr} ${shipment.customerEn} '
                   '${shipment.addressAr} ${shipment.addressEn} '
                   '${shipment.customerPhone}'
               .toLowerCase();
-      return matchesSupportedStatus &&
-          matchesTab &&
-          searchFields.contains(search.toLowerCase());
+      return searchFields.contains(search.toLowerCase());
     }).toList();
     final visible = filtered;
 
@@ -229,7 +237,9 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                 child: Row(
                   children: List.generate(_tabLabels.length, (index) {
                     final selected = selectedTabIndex == index;
-                    final count = tabCounts[index];
+                    final count =
+                        shipmentsState.statusCounts[_tabStatusIds[index]] ??
+                            tabCounts[index];
                     return Padding(
                       key: tabKeys[index],
                       padding: const EdgeInsetsDirectional.only(end: 7),
@@ -271,7 +281,8 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                             .textTheme
                             .labelLarge
                             ?.copyWith(
-                              color: selected ? AppColors.onDark : AppColors.navy,
+                              color:
+                                  selected ? AppColors.onDark : AppColors.navy,
                             ),
                         onSelected: (_) => _selectTab(index),
                       ),
@@ -306,7 +317,12 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                     '${visible.length} ${tr(context, AppLocaleKey.shipmentCount)}',
                     style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 8),
-                ShipmentList(shipments: visible),
+                ShipmentList(
+                  shipments: visible,
+                  numberInTransitShipments: selectedTabIndex == 0,
+                  sequenceSource: selectedTabIndex == 0 ? matchingTab : null,
+                  sequenceStore: widget.sequenceStore,
+                ),
                 if (shipmentsState.loadMoreError != null)
                   Center(
                     child: TextButton(

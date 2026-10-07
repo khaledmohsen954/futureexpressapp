@@ -335,12 +335,18 @@ class ShipmentsRepository {
     final total = pagination is Map
         ? _toInt(pagination['total'])
         : _toInt(response['total_orders_count']);
+    final statusCounts = <int, int>{
+      for (final statusId in ShipmentStatusApi.supportedStatusIds)
+        if (_toInt(response['status_$statusId']) case final count?)
+          statusId: count,
+    };
 
     return ShipmentPage(
       shipments: shipments,
       currentPage: currentPage ?? requestedPage,
       lastPage: lastPage ?? currentPage ?? requestedPage,
       total: total,
+      statusCounts: statusCounts,
     );
   }
 
@@ -364,12 +370,14 @@ class ShipmentPage {
     required this.currentPage,
     required this.lastPage,
     this.total,
+    this.statusCounts = const {},
   });
 
   final List<Shipment> shipments;
   final int currentPage;
   final int lastPage;
   final int? total;
+  final Map<int, int> statusCounts;
 
   bool get hasNextPage => currentPage < lastPage;
 }

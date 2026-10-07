@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:futureexpressapp/core/assets/app_images.dart';
 import 'package:futureexpressapp/core/custom_widgets/buttons/custom_button.dart';
 import 'package:futureexpressapp/core/l10n/app_strings.dart';
 import 'package:futureexpressapp/core/theme.dart';
 import 'package:futureexpressapp/core/theme/app_colors.dart';
 import 'package:futureexpressapp/core/theme/app_text_style.dart';
+import 'package:futureexpressapp/core/widgets/messages.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ShipmentDetailsCard extends StatelessWidget {
@@ -113,6 +118,14 @@ class _CustomerCard extends StatelessWidget {
             "#${shipment?.orderId ?? shipment?.id ?? '—'}",
             AppLocaleKey.shipmentNumber,
           ),
+          if (shipment?.numberCount != null) ...[
+            const SizedBox(height: 8),
+            _Info(
+              Icons.inventory_2_outlined,
+              '${shipment!.numberCount}',
+              AppLocaleKey.shipmentPackageCount,
+            ),
+          ],
           if (shipment?.trackingNumber != null) ...[
             const SizedBox(height: 8),
             _Info(
@@ -141,7 +154,9 @@ class _CustomerCard extends StatelessWidget {
             const SizedBox(height: 8),
             _Info(
               Icons.info_outline,
-              isAr ? shipment!.statusLabelAr ?? shipment!.statusLabel! : shipment!.statusLabel!,
+              isAr
+                  ? shipment!.statusLabelAr ?? shipment!.statusLabel!
+                  : shipment!.statusLabel!,
               AppLocaleKey.shipmentStatus,
             ),
           ],
@@ -192,9 +207,49 @@ class _ContactButtons extends StatefulWidget {
   State<_ContactButtons> createState() => _ContactButtonsState();
 }
 
-class _ContactButtonsState extends State<_ContactButtons> {
+class _ContactButtonsState extends State<_ContactButtons>
+    with WidgetsBindingObserver {
   late bool _whatsappSent = widget.shipment?.whatsappSent ?? false;
   bool _isSending = false;
+  bool _waitingForWhatsappReturn = false;
+  bool _leftAppForWhatsapp = false;
+  bool _showingWhatsappConfirmation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ContactButtons oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shipment?.id != widget.shipment?.id) {
+      _whatsappSent = widget.shipment?.whatsappSent ?? false;
+    } else if (widget.shipment?.whatsappSent == true) {
+      _whatsappSent = true;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_waitingForWhatsappReturn) return;
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _leftAppForWhatsapp = true;
+    } else if (state == AppLifecycleState.resumed && _leftAppForWhatsapp) {
+      _waitingForWhatsappReturn = false;
+      _leftAppForWhatsapp = false;
+      unawaited(_confirmWhatsappSent());
+    }
+  }
 
   String? get _phone => widget.shipment?.customerPhone;
 
@@ -210,28 +265,146 @@ class _ContactButtonsState extends State<_ContactButtons> {
     return digits;
   }
 
+  Future<bool> _saveOrderNumberAsContactName() async {
+    final phoneNumber = _whatsappNumber(_phone!.trim());
+    final orderNumber =
+        (widget.shipment?.orderId ?? widget.shipment?.id)?.trim() ?? '';
+    final contactName = widget.shipment?.numberCount == null
+        ? orderNumber
+        : '${widget.shipment!.numberCount}-$orderNumber';
+    if (phoneNumber.isEmpty || orderNumber.isEmpty) {
+      showLocalMessage(
+        context,
+        tr(context, AppLocaleKey.whatsappContactSaveFailed),
+      );
+      return false;
+    }
+    final permissionRequiredMessage =
+        tr(context, AppLocaleKey.whatsappContactPermissionRequired);
+    final saveFailedMessage =
+        tr(context, AppLocaleKey.whatsappContactSaveFailed);
+
+    try {
+      final permission =
+          await FlutterContacts.permissions.request(PermissionType.readWrite);
+      if (!mounted) return false;
+      if (permission != PermissionStatus.granted &&
+          permission != PermissionStatus.limited) {
+        showLocalMessage(context, permissionRequiredMessage);
+        return false;
+      }
+
+      final contacts = await FlutterContacts.getAll(
+        properties: {ContactProperty.name, ContactProperty.phone},
+      );
+      if (!mounted) return false;
+      Contact? matchingContact;
+      for (final contact in contacts) {
+        if (contact.phones.any(
+          (phone) => _whatsappNumber(phone.number) == phoneNumber,
+        )) {
+          matchingContact = contact;
+          break;
+        }
+      }
+
+      if (matchingContact != null) {
+        await FlutterContacts.update(
+          matchingContact.copyWith(name: Name(first: contactName)),
+        );
+      } else {
+        await FlutterContacts.create(
+          Contact(
+            name: Name(first: contactName),
+            phones: [Phone(number: '+$phoneNumber')],
+          ),
+        );
+      }
+      return true;
+    } on PlatformException catch (error) {
+      if (!mounted) return false;
+      showLocalMessage(context, error.message ?? saveFailedMessage);
+      return false;
+    }
+  }
+
   Future<void> _openWhatsapp() async {
-    if (!_hasPhone || _whatsappSent || _isSending) return;
+    if (!_hasPhone || _isSending) return;
+    final shouldSendMessage = !_whatsappSent;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final message = shouldSendMessage
+        ? (isAr
+                ? widget.shipment?.whatsappMessageAr
+                : widget.shipment?.whatsappMessageEn) ??
+            (isAr
+                ? widget.shipment?.whatsappMessageEn
+                : widget.shipment?.whatsappMessageAr)
+        : null;
+    if (shouldSendMessage && (message == null || message.trim().isEmpty)) {
+      showLocalMessage(
+        context,
+        tr(context, AppLocaleKey.whatsappMessageUnavailable),
+      );
+      return;
+    }
+
+    if (!await _saveOrderNumberAsContactName() || !mounted) return;
+
+    if (shouldSendMessage) {
+      _waitingForWhatsappReturn = true;
+      _leftAppForWhatsapp = false;
+    }
     setState(() => _isSending = true);
     try {
-      final isAr = Localizations.localeOf(context).languageCode == 'ar';
-      final message =
-          isAr ? widget.shipment?.whatsappMessageAr : widget.shipment?.whatsappMessageEn;
       final uri = Uri.https(
         'wa.me',
         '/${_whatsappNumber(_phone!.trim())}',
-        message == null || message.isEmpty ? null : {'text': message},
+        message == null ? null : {'text': message},
       );
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && shouldSendMessage) {
+        _waitingForWhatsappReturn = false;
+        _leftAppForWhatsapp = false;
+        if (mounted) {
+          showLocalMessage(
+              context, tr(context, AppLocaleKey.openWhatsappFailed));
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Future<void> _confirmWhatsappSent() async {
+    if (!mounted || _showingWhatsappConfirmation) return;
+    _showingWhatsappConfirmation = true;
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(tr(context, AppLocaleKey.whatsappSentConfirmationTitle)),
+          content: Text(
+            tr(context, AppLocaleKey.whatsappSentConfirmationMessage),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(tr(context, AppLocaleKey.whatsappNotSent)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(tr(context, AppLocaleKey.whatsappIHaveSent)),
+            ),
+          ],
+        ),
       );
-      if (!launched) return;
+      if (confirmed != true || !mounted) return;
 
       final markedSent = await widget.onMarkWhatsappSent();
       if (mounted) setState(() => _whatsappSent = markedSent);
     } finally {
-      if (mounted) setState(() => _isSending = false);
+      _showingWhatsappConfirmation = false;
     }
   }
 
@@ -248,7 +421,7 @@ class _ContactButtonsState extends State<_ContactButtons> {
         Expanded(
           flex: 2,
           child: CustomButton(
-            onPressed: _hasPhone && !_whatsappSent && !_isSending ? _openWhatsapp : () {},
+            onPressed: _hasPhone && !_isSending ? _openWhatsapp : () {},
             height: 40,
             color: AppColor.greenColor(context),
             prefixIcon: Padding(

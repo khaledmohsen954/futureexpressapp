@@ -161,8 +161,10 @@ class _PickupScreenState extends State<PickupScreen> {
 
   Future<void> _submitPickup() async {
     if (_isBusy || _currentOrders.isEmpty) return;
-    final orders = List<_ScannedPickupOrder>.of(_currentOrders);
-    if (_source == _PickupSource.customer &&
+    final source = _source;
+    final submittedOrders = _orders[source]!;
+    final orders = List<_ScannedPickupOrder>.of(submittedOrders);
+    if (source == _PickupSource.customer &&
         (orders.length != 1 || orders.single.confirmationImage == null)) {
       showLocalMessage(
         context,
@@ -173,7 +175,7 @@ class _PickupScreenState extends State<PickupScreen> {
 
     setState(() => _isBusy = true);
     try {
-      final result = _source == _PickupSource.customer
+      final result = source == _PickupSource.customer
           ? await sl<PickupRepository>().confirmFromCustomer(
               orderId: orders.single.id,
               confirmationImage: orders.single.confirmationImage!,
@@ -186,14 +188,18 @@ class _PickupScreenState extends State<PickupScreen> {
         (failure) => showLocalMessage(context, failure.errMessage),
         (_) {
           setState(() {
-            _currentOrders.clear();
-            _customerScanComplete = false;
-            _merchantWaitingForNextScan = false;
+            _orders[source] = [];
+            if (source == _PickupSource.customer) {
+              _customerScanComplete = false;
+            } else {
+              _merchantWaitingForNextScan = false;
+            }
           });
           unawaited(CommonMethods.cleanupStagingFiles(
             orders.map((order) => order.confirmationImage).toList(),
           ));
           showLocalMessage(context, tr(context, AppLocaleKey.pickupConfirmed));
+          Navigator.of(context).pop();
         },
       );
     } finally {
@@ -389,12 +395,18 @@ class _PickupScreenState extends State<PickupScreen> {
         child: SurfaceCard(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Text(
+                "${index + 1} .",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(width: 8),
               const Icon(Icons.qr_code_2),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${index + 1}. ${order.id}',
+                  ' ${order.id}',
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),

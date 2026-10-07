@@ -29,7 +29,10 @@ void main() {
         supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
         home: AppScope(
           state: state,
-          child: ShipmentsScreen(repository: shipmentsApi.createRepository()),
+          child: ShipmentsScreen(
+            repository: shipmentsApi.createRepository(),
+            sequenceStore: FakeDailyShipmentSequenceStore(),
+          ),
         ),
       ),
     );
@@ -50,6 +53,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('uses API status totals for shipment tab badges', (tester) async {
+    final state = AppState(repository: _MemoryRepository())
+      ..locale = const Locale('en', 'US');
+    final shipmentsApi = FakeShipmentsApiConsumer({
+      1: shipmentsResponse(
+        [testOrder('FX-2048', 17)],
+        page: 1,
+        lastPage: 1,
+        statusCounts: {220: 21, 34: 5, 17: 36},
+      ),
+    });
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en', 'US'),
+        supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
+        home: AppScope(
+          state: state,
+          child: ShipmentsScreen(
+            repository: shipmentsApi.createRepository(),
+            sequenceStore: FakeDailyShipmentSequenceStore(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('36'), findsOneWidget);
+    expect(find.text('21'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widget<ShipmentCard>(find.byType(ShipmentCard).first)
+          .sequenceNumber,
+      1,
+    );
+  });
+
   testWidgets('only supported API statuses are shown and filtered',
       (tester) async {
     final state = AppState(repository: _MemoryRepository())
@@ -63,7 +106,10 @@ void main() {
         supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
         home: AppScope(
           state: state,
-          child: ShipmentsScreen(repository: shipmentsApi.createRepository()),
+          child: ShipmentsScreen(
+            repository: shipmentsApi.createRepository(),
+            sequenceStore: FakeDailyShipmentSequenceStore(),
+          ),
         ),
       ),
     );

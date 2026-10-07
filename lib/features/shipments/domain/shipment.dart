@@ -69,7 +69,7 @@ class Shipment {
   final ShipmentStatus status;
   final int amount;
 
-  Shipment copyWith({ShipmentStatus? status}) => Shipment(
+  Shipment copyWith({ShipmentStatus? status, bool? whatsappSent}) => Shipment(
         id: id,
         orderId: orderId,
         customerAr: customerAr,
@@ -94,7 +94,7 @@ class Shipment {
         amountPaid: amountPaid,
         whatsappMessageEn: whatsappMessageEn,
         whatsappMessageAr: whatsappMessageAr,
-        whatsappSent: whatsappSent,
+        whatsappSent: whatsappSent ?? this.whatsappSent,
         apiStatusId: apiStatusId,
         statusLabel: statusLabel,
         statusLabelAr: statusLabelAr,

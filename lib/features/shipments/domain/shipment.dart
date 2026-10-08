@@ -22,6 +22,7 @@ class Shipment {
       this.addressDetails,
       this.referenceNumber,
       this.numberCount,
+      this.dailyNumber,
       this.orderContents,
       this.pickupDate,
       this.amountLabel,
@@ -53,6 +54,7 @@ class Shipment {
   final String? addressDetails;
   final String? referenceNumber;
   final int? numberCount;
+  final int? dailyNumber;
   final String? orderContents;
   final String? pickupDate;
   final String? amountLabel;
@@ -88,6 +90,7 @@ class Shipment {
         addressDetails: addressDetails,
         referenceNumber: referenceNumber,
         numberCount: numberCount,
+        dailyNumber: dailyNumber,
         orderContents: orderContents,
         pickupDate: pickupDate,
         amountLabel: amountLabel,

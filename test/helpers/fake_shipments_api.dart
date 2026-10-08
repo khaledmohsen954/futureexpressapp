@@ -185,6 +185,7 @@ Map<String, dynamic> testOrder(
   int statusId, {
   String? orderId,
   String clientName = 'Customer',
+  int? dailyNumber,
 }) =>
     {
       'id': id,
@@ -196,6 +197,7 @@ Map<String, dynamic> testOrder(
       'client_city_ar': 'الرياض',
       'amount': '195.00',
       'amount_paid': 0,
+      if (dailyNumber != null) 'daily_number': dailyNumber,
     };
 
 FakeShipmentsApiConsumer createTestShipmentsApi() => FakeShipmentsApiConsumer({

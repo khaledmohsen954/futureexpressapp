@@ -31,7 +31,6 @@ void main() {
           state: state,
           child: ShipmentsScreen(
             repository: shipmentsApi.createRepository(),
-            sequenceStore: FakeDailyShipmentSequenceStore(),
           ),
         ),
       ),
@@ -58,7 +57,7 @@ void main() {
       ..locale = const Locale('en', 'US');
     final shipmentsApi = FakeShipmentsApiConsumer({
       1: shipmentsResponse(
-        [testOrder('FX-2048', 17)],
+        [testOrder('FX-2048', 17, dailyNumber: 1)],
         page: 1,
         lastPage: 1,
         statusCounts: {220: 21, 34: 5, 17: 36},
@@ -74,7 +73,6 @@ void main() {
           state: state,
           child: ShipmentsScreen(
             repository: shipmentsApi.createRepository(),
-            sequenceStore: FakeDailyShipmentSequenceStore(),
           ),
         ),
       ),
@@ -108,7 +106,6 @@ void main() {
           state: state,
           child: ShipmentsScreen(
             repository: shipmentsApi.createRepository(),
-            sequenceStore: FakeDailyShipmentSequenceStore(),
           ),
         ),
       ),

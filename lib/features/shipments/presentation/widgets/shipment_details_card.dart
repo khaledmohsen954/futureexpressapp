@@ -269,9 +269,9 @@ class _ContactButtonsState extends State<_ContactButtons>
     final phoneNumber = _whatsappNumber(_phone!.trim());
     final orderNumber =
         (widget.shipment?.orderId ?? widget.shipment?.id)?.trim() ?? '';
-    final contactName = widget.shipment?.numberCount == null
+    final contactName = widget.shipment?.dailyNumber == null
         ? orderNumber
-        : '${widget.shipment!.numberCount}-$orderNumber';
+        : '${widget.shipment!.dailyNumber}-$orderNumber';
     if (phoneNumber.isEmpty || orderNumber.isEmpty) {
       showLocalMessage(
         context,

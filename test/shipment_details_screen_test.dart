@@ -117,7 +117,6 @@ void main() {
             builder: (context, child) => AppScope(state: state, child: child!),
             home: ShipmentsScreen(
               repository: shipmentsApi.createRepository(),
-              sequenceStore: FakeDailyShipmentSequenceStore(),
             ),
           ),
         ),

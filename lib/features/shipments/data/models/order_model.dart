@@ -39,6 +39,7 @@ class OrderModel {
       addressDetails: _asString(json['address_details']),
       referenceNumber: _asString(json['reference_number']),
       numberCount: _asInt(json['number_count']),
+      dailyNumber: _asInt(json['daily_number']),
       orderContents: _asString(json['order_contents']),
       pickupDate: _asString(json['pickup_date']),
       amountLabel: _asString(json['amount']),

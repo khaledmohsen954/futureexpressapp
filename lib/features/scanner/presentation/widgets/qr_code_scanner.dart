@@ -46,8 +46,7 @@ class QrCodeScanner extends StatefulWidget {
   State<QrCodeScanner> createState() => QrCodeScannerState();
 }
 
-class QrCodeScannerState extends State<QrCodeScanner>
-    with WidgetsBindingObserver {
+class QrCodeScannerState extends State<QrCodeScanner> with WidgetsBindingObserver {
   final ValueNotifier<bool> detected = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
   late final ValueNotifier<ScannerShapeMode> shapeMode;
@@ -59,8 +58,7 @@ class QrCodeScannerState extends State<QrCodeScanner>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    shapeMode =
-        ValueNotifier<ScannerShapeMode>(widget.mode ?? widget.initialMode);
+    shapeMode = ValueNotifier<ScannerShapeMode>(widget.mode ?? widget.initialMode);
 
     controller = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
@@ -115,20 +113,30 @@ class QrCodeScannerState extends State<QrCodeScanner>
   Future<void> _handleScan(String value) async {
     final raw = value.trim();
     isLoading.value = true;
+
+    // أوقف الكاميرا قبل ما onScan يعمل pop، عشان متفضلش شغالة وهي بتتقفل
+    try {
+      if (controller.value.isRunning) {
+        await controller.stop();
+      }
+    } catch (e) {
+      debugPrint('Error stopping scanner before onScan: $e');
+    }
+
     try {
       await Future.sync(() => widget.onScan(raw));
     } finally {
       if (mounted) {
+        // لو الشاشة دي لسه هي الـ current route يبقى الـ caller مقفلهاش (مثلاً رسالة خطأ)
+        final stillCurrent = ModalRoute.of(context)?.isCurrent ?? false;
         detected.value = false;
         isLoading.value = false;
-
-        try {
-          if (controller.value.isRunning) {
-            await controller.stop();
+        if (stillCurrent) {
+          try {
+            await controller.start();
+          } catch (e) {
+            debugPrint('Error resetting scanner after scan: $e');
           }
-          await controller.start();
-        } catch (e) {
-          debugPrint('Error resetting scanner after scan: $e');
         }
       }
     }
@@ -214,8 +222,7 @@ class QrCodeScannerState extends State<QrCodeScanner>
             valueListenable: shapeMode,
             builder: (context, currentMode, _) {
               final bool isQr = currentMode == ScannerShapeMode.qr;
-              final double targetW =
-                  isQr ? size.width * 0.65 : size.width * 0.84;
+              final double targetW = isQr ? size.width * 0.65 : size.width * 0.84;
               final double targetH = isQr ? size.width * 0.65 : 135.0;
 
               return TweenAnimationBuilder<double>(
@@ -239,8 +246,7 @@ class QrCodeScannerState extends State<QrCodeScanner>
                                   holeWidth: holeWidth,
                                   holeHeight: holeHeight,
                                   borderRadius: 15,
-                                  overlayColor: AppColor.blackColor(context)
-                                      .withAlpha(200),
+                                  overlayColor: AppColor.blackColor(context).withAlpha(200),
                                 ),
                               ),
                             ),
@@ -298,8 +304,7 @@ class QrCodeScannerState extends State<QrCodeScanner>
                           const SizedBox(width: 4),
                           _modeButton(
                             context: context,
-                            title:
-                                app_strings.tr(context, AppLocaleKey.barcode),
+                            title: app_strings.tr(context, AppLocaleKey.barcode),
                             icon: Icons.view_week_rounded,
                             isSelected: currentMode == ScannerShapeMode.barcode,
                             onTap: () => setMode(ScannerShapeMode.barcode),
@@ -342,10 +347,8 @@ class QrCodeScannerState extends State<QrCodeScanner>
                   child: SliderTheme(
                     data: const SliderThemeData(
                       trackHeight: 10,
-                      thumbShape:
-                          RoundSliderThumbShape(enabledThumbRadius: 20.0),
-                      overlayShape:
-                          RoundSliderOverlayShape(overlayRadius: 20.0),
+                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 20.0),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 20.0),
                     ),
                     child: ValueListenableBuilder<double>(
                       valueListenable: zoomLevel,
@@ -436,8 +439,7 @@ class QrCodeScannerState extends State<QrCodeScanner>
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color:
-              isSelected ? AppColor.mainAppColor(context) : Colors.transparent,
+          color: isSelected ? AppColor.mainAppColor(context) : Colors.transparent,
           borderRadius: BorderRadius.circular(26),
         ),
         child: Row(

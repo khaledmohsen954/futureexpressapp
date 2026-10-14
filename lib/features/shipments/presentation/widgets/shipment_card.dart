@@ -17,10 +17,16 @@ class ShipmentCard extends StatefulWidget {
     super.key,
     required this.shipment,
     this.sequenceNumber,
+    this.actionLabelKey,
+    this.actionIcon = Icons.chevron_right,
+    this.onActionPressed,
   });
 
   final Shipment shipment;
   final int? sequenceNumber;
+  final String? actionLabelKey;
+  final IconData actionIcon;
+  final VoidCallback? onActionPressed;
 
   @override
   State<ShipmentCard> createState() => _ShipmentCardState();
@@ -44,6 +50,9 @@ class _ShipmentCardState extends State<ShipmentCard> {
     final statusLabel =
         (english ? shipment.statusLabel : shipment.statusLabelAr) ??
             shipment.statusLabel;
+    final hasCustomAction = widget.actionLabelKey != null;
+    final actionEnabled = !hasCustomAction || widget.onActionPressed != null;
+    final actionColor = actionEnabled ? AppColors.red : AppColors.muted;
     return Padding(
       padding: const EdgeInsets.only(bottom: 11),
       child: SurfaceCard(
@@ -109,25 +118,29 @@ class _ShipmentCardState extends State<ShipmentCard> {
         ]),
         const SizedBox(height: 10),
         InkWell(
-            onTap: () {
-              NavigatorMethods.pushNamed(
-                      context, RoutesName.shipmentDetailsScreen,
-                      arguments: shipment)
-                  .then((updated) {
-                if (updated == true && context.mounted) {
-                  context.read<ShipmentsCubit>().loadFirstPage();
-                }
-              });
+            onTap: hasCustomAction
+                ? widget.onActionPressed
+                : () {
+                    NavigatorMethods.pushNamed(
+                            context, RoutesName.shipmentDetailsScreen,
+                            arguments: shipment)
+                        .then((updated) {
+                      if (updated == true && context.mounted) {
+                        context.read<ShipmentsCubit>().loadFirstPage();
+                      }
+                    });
 
-              // setState(() => expanded = !expanded);
-            },
+                    // setState(() => expanded = !expanded);
+                  },
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(tr(context, AppLocaleKey.showDetails),
+              Text(
+                  tr(context,
+                      widget.actionLabelKey ?? AppLocaleKey.showDetails),
                   style: Theme.of(context)
                       .textTheme
                       .labelLarge
-                      ?.copyWith(color: AppColors.red)),
-              const Icon(Icons.chevron_right, color: AppColors.red),
+                      ?.copyWith(color: actionColor)),
+              Icon(widget.actionIcon, color: actionColor),
             ])),
         if (expanded) ShipmentDetails(shipment: shipment),
       ])),

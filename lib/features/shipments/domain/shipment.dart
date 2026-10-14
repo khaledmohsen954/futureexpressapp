@@ -116,10 +116,16 @@ extension ShipmentStatusApi on ShipmentStatus {
   static const int statusInTransit = 17;
   static const int statusDelivered = 220;
   static const int statusDeliveryFailed = 34;
+  static const int statusReturnPickupFromCustomer = 331;
+  static const int statusReturnPickupFromMerchant = 332;
   static const Set<int> supportedStatusIds = {
     statusInTransit,
     statusDelivered,
     statusDeliveryFailed,
+  };
+  static const Set<int> returnPickupStatusIds = {
+    statusReturnPickupFromCustomer,
+    statusReturnPickupFromMerchant,
   };
 
   int get apiId => switch (this) {

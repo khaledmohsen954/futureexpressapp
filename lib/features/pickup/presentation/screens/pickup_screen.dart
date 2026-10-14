@@ -2,206 +2,207 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:futureexpressapp/core/custom_widgets/custom_loading/custom_loading.dart';
 import 'package:futureexpressapp/core/l10n/app_strings.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
 import 'package:futureexpressapp/core/utils/common_methods.dart';
 import 'package:futureexpressapp/core/widgets.dart';
 import 'package:futureexpressapp/features/pickup/data/repositories/pickup_repository.dart';
-import 'package:futureexpressapp/features/scanner/presentation/widgets/qr_code_scanner.dart';
+import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_capture_mixin.dart';
+import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_scan_mixin.dart';
+import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_submit_mixin.dart';
+import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_utils.dart';
+import 'package:futureexpressapp/features/pickup/presentation/widgets/pickup_available_orders.dart';
+import 'package:futureexpressapp/features/pickup/presentation/widgets/pickup_customer_order_card.dart';
+import 'package:futureexpressapp/features/pickup/presentation/widgets/pickup_merchant_order_card.dart';
+import 'package:futureexpressapp/features/pickup/presentation/widgets/pickup_source_segment.dart';
+import 'package:futureexpressapp/features/pickup/presentation/screens/pickup_qr_scan_screen.dart';
+import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 import 'package:image_picker/image_picker.dart';
 
-enum _PickupSource { customer, merchant }
-
-class _ScannedPickupOrder {
-  const _ScannedPickupOrder({required this.id, this.confirmationImage});
-
-  final String id;
-  final File? confirmationImage;
-
-  _ScannedPickupOrder withImage(File image) =>
-      _ScannedPickupOrder(id: id, confirmationImage: image);
-}
-
 class PickupScreen extends StatefulWidget {
-  const PickupScreen({super.key});
+  const PickupScreen({super.key, this.preScannedShipment});
+
+  /// When non-null the order was already scanned (e.g. from [ScannerScreen])
+  /// and should be added to the customer pickup list automatically.
+  final Shipment? preScannedShipment;
 
   @override
   State<PickupScreen> createState() => _PickupScreenState();
 }
 
-class _PickupScreenState extends State<PickupScreen> {
-  final GlobalKey<QrCodeScannerState> _scannerKey =
-      GlobalKey<QrCodeScannerState>();
+class _PickupScreenState extends State<PickupScreen>
+    with PickupScanMixin, PickupCaptureMixin, PickupSubmitMixin {
   final ImagePicker _imagePicker = ImagePicker();
-  final Map<_PickupSource, List<_ScannedPickupOrder>> _orders = {
-    _PickupSource.customer: [],
-    _PickupSource.merchant: [],
+  final Map<PickupSource, List<ScannedPickupOrder>> _orders = {
+    PickupSource.customer: [],
+    PickupSource.merchant: [],
+  };
+  final Map<PickupSource, List<Shipment>> _availableOrders = {
+    PickupSource.customer: [],
+    PickupSource.merchant: [],
   };
 
-  _PickupSource _source = _PickupSource.customer;
+  PickupSource _source = PickupSource.customer;
   bool _isBusy = false;
-  bool _customerScanComplete = false;
-  bool _merchantWaitingForNextScan = false;
+  bool _isLoadingOrders = false;
+  String? _ordersError;
 
-  List<_ScannedPickupOrder> get _currentOrders => _orders[_source]!;
-  bool get _showScanner => switch (_source) {
-        _PickupSource.customer => !_customerScanComplete,
-        _PickupSource.merchant => !_merchantWaitingForNextScan,
-      };
+  List<ScannedPickupOrder> get _currentOrders => _orders[_source]!;
+  List<Shipment> get _currentAvailableOrders {
+    final scannedIds = _orders[_source]!.map((order) => order.id).toSet();
+    return _availableOrders[_source]!
+        .where((shipment) => !scannedIds.contains(pickupOrderId(shipment)))
+        .toList(growable: false);
+  }
 
-  Future<void> _onScan(String code) async {
-    if (_isBusy) return;
-    final scanSource = _source;
-    setState(() => _isBusy = true);
-    try {
-      final orders = _orders[scanSource]!;
-      final orderId = code.trim();
-      final isDuplicate = orders.any((order) => order.id == orderId);
-      if (isDuplicate) {
-        showLocalMessage(
-            context, tr(context, AppLocaleKey.orderAlreadyScanned));
-        if (scanSource == _PickupSource.merchant) {
-          setState(() => _merchantWaitingForNextScan = true);
-        }
-      } else {
-        setState(() {
-          orders.add(_ScannedPickupOrder(id: orderId));
-          if (scanSource == _PickupSource.customer) {
-            _customerScanComplete = true;
-          } else {
-            _merchantWaitingForNextScan = true;
-          }
-        });
-        if (scanSource == _PickupSource.customer) {
-          await WidgetsBinding.instance.endOfFrame;
-          await _captureConfirmationImage(orderId);
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isBusy = false);
-      }
+  @override
+  bool get isBusy => _isBusy;
+  @override
+  set isBusy(bool value) => _isBusy = value;
+
+  @override
+  PickupSource get source => _source;
+
+  @override
+  Map<PickupSource, List<ScannedPickupOrder>> get orders => _orders;
+
+  @override
+  List<ScannedPickupOrder> get currentOrders => _currentOrders;
+
+  @override
+  ImagePicker get imagePicker => _imagePicker;
+
+  @override
+  Future<void> Function(String orderId) get doCaptureConfirmationImage => _captureConfirmationImage;
+
+  @override
+  Future<void> Function(String orderId, File image) get doConfirmCustomerOrder =>
+      _confirmCustomerOrder;
+
+  @override
+  Future<void> Function({bool showLoading}) get doLoadPickupOrders => _loadPickupOrders;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint('PICKUP initState');
+    unawaited(_loadPickupOrders());
+    final preScanned = widget.preScannedShipment;
+    if (preScanned != null) {
+      _addPreScannedOrder(preScanned);
     }
   }
 
-  Future<void> _captureConfirmationImage(String orderId) async {
-    try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-      if (!mounted || image == null) return;
-
-      final compressed = await CommonMethods.compressImage(File(image.path));
-      if (!mounted) {
-        await CommonMethods.cleanupStagingFiles([compressed]);
-        return;
-      }
-      final orders = _currentOrders;
-      final index = orders.indexWhere((order) => order.id == orderId);
-      if (index == -1) {
-        await CommonMethods.cleanupStagingFiles([compressed]);
-        return;
-      }
-      final previousImage = orders[index].confirmationImage;
-      setState(() {
-        orders[index] = orders[index].withImage(compressed);
+  void _addPreScannedOrder(Shipment shipment) {
+    final orderId = pickupOrderId(shipment);
+    final source = pickupSourceForShipment(shipment);
+    _source = source;
+    _orders[source]!.add(ScannedPickupOrder(id: orderId));
+    if (source == PickupSource.customer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) await _captureConfirmationImage(orderId);
       });
-      if (previousImage != null) {
-        await CommonMethods.cleanupStagingFiles([previousImage]);
-      }
-    } on PlatformException catch (error) {
-      if (mounted) {
-        showLocalMessage(
-          context,
-          error.message ?? tr(context, AppLocaleKey.confirmationPhotoRequired),
-        );
-      }
-    } catch (error) {
-      if (mounted) showLocalMessage(context, error.toString());
     }
   }
 
-  Future<void> _retakeConfirmationImage(String orderId) async {
+  Future<void> _loadPickupOrders({bool showLoading = true}) async {
+    if (_isLoadingOrders) return;
+    if (showLoading) {
+      setState(() {
+        _isLoadingOrders = true;
+        _ordersError = null;
+      });
+    }
+    final result = await sl<PickupRepository>().getDelegateReturnOrders();
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        setState(() {
+          _isLoadingOrders = false;
+          _ordersError = failure.errMessage;
+        });
+      },
+      (shipments) {
+        setState(() {
+          _availableOrders[PickupSource.customer] = shipments
+              .where((shipment) => shipment.apiStatusId == PickupSource.customer.statusId)
+              .toList(growable: false);
+          _availableOrders[PickupSource.merchant] = shipments
+              .where((shipment) => shipment.apiStatusId == PickupSource.merchant.statusId)
+              .toList(growable: false);
+          _isLoadingOrders = false;
+          _ordersError = null;
+        });
+      },
+    );
+  }
+
+  Future<void> _captureConfirmationImage(String orderId) => captureConfirmationImage(orderId);
+
+  Future<void> _confirmCustomerOrder(String orderId, File image) =>
+      confirmCustomerOrder(orderId, image);
+
+  Future<void> _scanMerchantShipment() async {
     if (_isBusy) return;
     setState(() => _isBusy = true);
     try {
-      await _captureConfirmationImage(orderId);
-    } finally {
-      if (mounted) setState(() => _isBusy = false);
-    }
-  }
-
-  void _scanAnotherMerchantOrder() {
-    if (_isBusy || _source != _PickupSource.merchant) return;
-    setState(() => _merchantWaitingForNextScan = false);
-  }
-
-  Future<void> _retryCustomerScan() async {
-    if (_isBusy || _source != _PickupSource.customer) return;
-    final images = _orders[_PickupSource.customer]!
-        .map((order) => order.confirmationImage)
-        .toList();
-    setState(() {
-      _orders[_PickupSource.customer]!.clear();
-      _customerScanComplete = false;
-    });
-    await CommonMethods.cleanupStagingFiles(images);
-  }
-
-  Future<void> _removeOrder(String orderId) async {
-    final index = _currentOrders.indexWhere((order) => order.id == orderId);
-    if (index == -1) return;
-    final image = _currentOrders[index].confirmationImage;
-    setState(() => _currentOrders.removeAt(index));
-    if (image != null) await CommonMethods.cleanupStagingFiles([image]);
-  }
-
-  Future<void> _submitPickup() async {
-    if (_isBusy || _currentOrders.isEmpty) return;
-    final source = _source;
-    final submittedOrders = _orders[source]!;
-    final orders = List<_ScannedPickupOrder>.of(submittedOrders);
-    if (source == _PickupSource.customer &&
-        (orders.length != 1 || orders.single.confirmationImage == null)) {
-      showLocalMessage(
-        context,
-        tr(context, AppLocaleKey.confirmationPhotoRequired),
+      final scannedCode = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (_) => const PickupQrScanScreen()),
       );
-      return;
-    }
+      if (!mounted || scannedCode == null) return;
+      final code = scannedCode.trim();
+      debugPrint('MERCHANT SCAN code=$code available=${_currentAvailableOrders.map(pickupOrderCodes).toList()}');
+      final normalizedCode = code.toUpperCase();
+      Shipment? matched;
+      for (final shipment in _currentAvailableOrders) {
+        if (pickupOrderCodes(shipment).any(
+          (value) => value.trim().toUpperCase() == normalizedCode,
+        )) {
+          matched = shipment;
+          break;
+        }
+      }
 
-    setState(() => _isBusy = true);
-    try {
-      final result = source == _PickupSource.customer
-          ? await sl<PickupRepository>().confirmFromCustomer(
-              orderId: orders.single.id,
-              confirmationImage: orders.single.confirmationImage!,
-            )
-          : await sl<PickupRepository>().confirmFromMerchant(
-              orderIds: orders.map((order) => order.id).toList(),
-            );
-      if (!mounted) return;
-      result.fold(
-        (failure) => showLocalMessage(context, failure.errMessage),
-        (_) {
-          setState(() {
-            _orders[source] = [];
-            if (source == _PickupSource.customer) {
-              _customerScanComplete = false;
-            } else {
-              _merchantWaitingForNextScan = false;
-            }
-          });
-          unawaited(CommonMethods.cleanupStagingFiles(
-            orders.map((order) => order.confirmationImage).toList(),
-          ));
-          showLocalMessage(context, tr(context, AppLocaleKey.pickupConfirmed));
-          Navigator.of(context).pop();
-        },
-      );
+      // Server scan endpoint currently returns 500 for arbitrary QR codes, so
+      // keep flow purely local and report the locally known codes instead.
+
+
+      if (matched == null) {
+        final availableCodes = _currentAvailableOrders
+            .map((shipment) => pickupOrderCodes(shipment).join('/'))
+            .join(', ');
+        debugPrint('MERCHANT SCAN no-match code=$code available=[$availableCodes]');
+        if (mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('لا يوجد لديك شحنه بهذا الرقم'),
+              content: SelectableText('code=$code\navailable=[$availableCodes]'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(tr(context, AppLocaleKey.confirm)),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+      final orderId = pickupOrderId(matched);
+      final isDuplicate =
+          _orders[PickupSource.merchant]!.any((order) => order.id == orderId);
+      if (isDuplicate) {
+        if (mounted) {
+          showLocalMessage(context, tr(context, AppLocaleKey.orderAlreadyScanned));
+        }
+        return;
+      }
+      setState(() {
+        _orders[PickupSource.merchant]!.add(ScannedPickupOrder(id: orderId));
+      });
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
@@ -209,11 +210,10 @@ class _PickupScreenState extends State<PickupScreen> {
 
   @override
   void dispose() {
-    final files = _orders.values
-        .expand((orders) => orders)
-        .map((order) => order.confirmationImage)
-        .toList();
+    final files =
+        _orders.values.expand((orders) => orders).map((order) => order.confirmationImage).toList();
     unawaited(CommonMethods.cleanupStagingFiles(files));
+    debugPrint('PICKUP dispose');
     super.dispose();
   }
 
@@ -223,64 +223,28 @@ class _PickupScreenState extends State<PickupScreen> {
       appBar: AppBar(title: Text(tr(context, AppLocaleKey.pickup))),
       body: PageBody(
         children: [
-          SegmentedButton<_PickupSource>(
-            segments: [
-              ButtonSegment(
-                value: _PickupSource.customer,
-                label: Text(tr(context, AppLocaleKey.pickupFromCustomer)),
-                icon: const Icon(Icons.person_outline),
-              ),
-              ButtonSegment(
-                value: _PickupSource.merchant,
-                label: Text(tr(context, AppLocaleKey.pickupFromMerchant)),
-                icon: const Icon(Icons.store_outlined),
-              ),
-            ],
-            selected: {_source},
-            onSelectionChanged: _isBusy
-                ? null
-                : (selection) => setState(() => _source = selection.first),
+          PickupSourceSegment(
+            selected: _source,
+            onSelectionChanged: (source) => setState(() => _source = source),
+            enabled: !_isBusy,
           ),
           const SizedBox(height: 18),
-          Text(
-            tr(context, AppLocaleKey.scanInstruction),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          if (_showScanner)
-            QrCodeScanner(
-              key: _scannerKey,
-              isLoading: _isBusy,
-              onScan: _onScan,
-              description: '',
-              title: '',
-              showAppBar: false,
-            )
-          else if (_source == _PickupSource.customer)
-            Column(
-              children: [
-                SurfaceCard(
-                  child: Center(
-                    child: Text(
-                      tr(context, AppLocaleKey.customerPickupScanComplete),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _isBusy ? null : _retryCustomerScan,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: Text(tr(context, AppLocaleKey.retryScanOrder)),
-                ),
-              ],
-            )
-          else
+          if (_source == PickupSource.merchant) ...[
             FilledButton.icon(
-              onPressed: _isBusy ? null : _scanAnotherMerchantOrder,
+              onPressed: _isBusy ? null : () => unawaited(_scanMerchantShipment()),
               icon: const Icon(Icons.qr_code_scanner),
-              label: Text(tr(context, AppLocaleKey.scanAnotherOrder)),
+              label: Text(tr(context, AppLocaleKey.scanQr)),
             ),
+            const SizedBox(height: 12),
+          ],
+          PickupAvailableOrders(
+            shipments: _currentAvailableOrders,
+            isLoading: _isLoadingOrders,
+            error: _ordersError,
+            onRetry: () => unawaited(doLoadPickupOrders()),
+            onScan: (shipment) => unawaited(scanShipment(shipment)),
+            isBusy: _isBusy,
+          ),
           if (_isBusy) ...[
             const SizedBox(height: 12),
             const SurfaceCard(
@@ -293,7 +257,7 @@ class _PickupScreenState extends State<PickupScreen> {
             ),
           ],
           const SizedBox(height: 18),
-          if (_source == _PickupSource.customer) ...[
+          if (_source == PickupSource.customer) ...[
             Text(
               tr(context, AppLocaleKey.shipmentNumber),
               style: Theme.of(context).textTheme.titleMedium,
@@ -306,7 +270,12 @@ class _PickupScreenState extends State<PickupScreen> {
                 ),
               )
             else
-              _customerOrderCard(context, _currentOrders.single),
+              PickupCustomerOrderCard(
+                order: _currentOrders.single,
+                onRetake: () => unawaited(retakeConfirmationImage(_currentOrders.single.id)),
+                onRemove: () => unawaited(removeOrder(_currentOrders.single.id)),
+                isBusy: _isBusy,
+              ),
           ] else ...[
             Text(
               '${tr(context, AppLocaleKey.scannedOrders)} (${_currentOrders.length})',
@@ -321,11 +290,16 @@ class _PickupScreenState extends State<PickupScreen> {
               )
             else
               for (var index = 0; index < _currentOrders.length; index++)
-                _merchantOrderCard(context, _currentOrders[index], index),
+                PickupMerchantOrderCard(
+                  order: _currentOrders[index],
+                  index: index,
+                  onRemove: () => unawaited(removeOrder(_currentOrders[index].id)),
+                  isBusy: _isBusy,
+                ),
           ],
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: _isBusy || _currentOrders.isEmpty ? null : _submitPickup,
+            onPressed: _isBusy || _currentOrders.isEmpty ? null : submitPickup,
             icon: const Icon(Icons.check),
             label: Text(tr(context, AppLocaleKey.submitPickup)),
           ),
@@ -333,90 +307,4 @@ class _PickupScreenState extends State<PickupScreen> {
       ),
     );
   }
-
-  Widget _customerOrderCard(
-    BuildContext context,
-    _ScannedPickupOrder order,
-  ) =>
-      SurfaceCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            if (order.confirmationImage != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  order.confirmationImage!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              const Icon(Icons.qr_code_2),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                order.id,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            ),
-            IconButton(
-              tooltip: tr(
-                context,
-                order.confirmationImage == null
-                    ? AppLocaleKey.captureConfirmationPhoto
-                    : AppLocaleKey.retakeConfirmationPhoto,
-              ),
-              onPressed:
-                  _isBusy ? null : () => _retakeConfirmationImage(order.id),
-              icon: Icon(
-                order.confirmationImage == null
-                    ? Icons.camera_alt_outlined
-                    : Icons.refresh,
-              ),
-            ),
-            IconButton(
-              tooltip: tr(context, AppLocaleKey.removeOrder),
-              onPressed: _isBusy ? null : () => _removeOrder(order.id),
-              icon: const Icon(Icons.close),
-            ),
-          ],
-        ),
-      );
-
-  Widget _merchantOrderCard(
-    BuildContext context,
-    _ScannedPickupOrder order,
-    int index,
-  ) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: SurfaceCard(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "${index + 1} .",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              SizedBox(width: 8),
-              const Icon(Icons.qr_code_2),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  ' ${order.id}',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              ),
-              IconButton(
-                tooltip: tr(context, AppLocaleKey.removeOrder),
-                onPressed: _isBusy ? null : () => _removeOrder(order.id),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-        ),
-      );
 }

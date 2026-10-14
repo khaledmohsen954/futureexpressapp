@@ -15,9 +15,12 @@ class AppRouters {
           builder: (_) => const SupportScreen(),
         );
       case RoutesName.pickupScreen:
+        final shipment = settings.arguments;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const PickupScreen(),
+          builder: (_) => PickupScreen(
+            preScannedShipment: shipment is Shipment ? shipment : null,
+          ),
         );
       case RoutesName.sendReportScreen:
         final report = settings.arguments;

@@ -11,15 +11,15 @@ import 'package:futureexpressapp/core/services/services_locator_imports.dart';
 import 'package:futureexpressapp/core/session/auth_session.dart';
 
 import 'core/l10n/app_strings.dart';
-import 'core/widgets/internet_connection_gate.dart';
 import 'core/state/app_state.dart';
 import 'core/theme.dart';
 import 'core/theme/cubit/app_theme_cubit.dart';
 import 'core/utils/location_requirement.dart';
-import 'features/profile/presentation/screens/profile_splash_screen.dart';
+import 'core/widgets/internet_connection_gate.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/app_shell.dart';
 import 'features/profile/data/repositories/profile_repository.dart';
+import 'features/profile/presentation/screens/profile_splash_screen.dart';
 import 'features/support/presentation/widgets/app_update_gate.dart';
 
 /// Root widget wires state, locale, theme and the signed-in navigation shell.
@@ -89,6 +89,7 @@ class _FutureExpressAppState extends State<FutureExpressApp> {
                 context,
                 InternetConnectionGate(
                   child: AppUpdateGate(
+                    navigatorKey: AppRouters.navigatorKey,
                     child: AppScope(state: state, child: child!),
                   ),
                 ),

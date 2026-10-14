@@ -16,6 +16,7 @@ import 'package:futureexpressapp/core/utils/common_methods.dart';
 import 'package:futureexpressapp/core/utils/navigator_methods.dart';
 import 'package:futureexpressapp/core/widgets/action_button.dart';
 import 'package:futureexpressapp/core/widgets/messages.dart';
+import 'package:futureexpressapp/features/pickup/data/repositories/pickup_repository.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 import 'package:futureexpressapp/features/scanner/presentation/widgets/qr_code_scanner.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
@@ -24,6 +25,7 @@ import 'package:futureexpressapp/features/shipments/presentation/widgets/capture
 import 'package:futureexpressapp/features/shipments/presentation/screens/verify_shipment_otp_screen.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_details_card.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_qr_card.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ShipmentDetailsScreen extends StatefulWidget {
   const ShipmentDetailsScreen({super.key, required this.shipment});
@@ -37,6 +39,8 @@ class ShipmentDetailsScreen extends StatefulWidget {
 class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
   late Shipment _shipment = widget.shipment;
   bool _isSubmittingDelivery = false;
+  bool _isSubmittingPickup = false;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void didUpdateWidget(covariant ShipmentDetailsScreen oldWidget) {
@@ -80,17 +84,8 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
     setState(() => _isSubmittingDelivery = true);
     File? failureImage;
     try {
-      final scannedOrderNumber = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => const _ShipmentQrScanScreen(),
-        ),
-      );
-      if (!mounted || scannedOrderNumber == null) return;
-      final expectedOrderNumber = (_shipment.orderId ?? _shipment.id).trim();
-      if (scannedOrderNumber.trim() != expectedOrderNumber) {
-        showLocalMessage(context, tr(context, AppLocaleKey.shipmentQrMismatch));
-        return;
-      }
+      final shipmentVerified = await _verifyCurrentShipmentScan();
+      if (!mounted || !shipmentVerified) return;
 
       failureImage = await captureStatusImage(context);
       if (!mounted || failureImage == null) return;
@@ -144,6 +139,92 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
     }
   }
 
+  Future<void> _submitReturnPickup() async {
+    if (_isSubmittingPickup) return;
+    final statusId = _shipment.apiStatusId;
+    final fromCustomer =
+        statusId == ShipmentStatusApi.statusReturnPickupFromCustomer;
+    final fromMerchant =
+        statusId == ShipmentStatusApi.statusReturnPickupFromMerchant;
+    if (!fromCustomer && !fromMerchant) return;
+
+    setState(() => _isSubmittingPickup = true);
+    File? confirmationImage;
+    try {
+      final shipmentVerified = await _verifyCurrentShipmentScan();
+      if (!mounted || !shipmentVerified) return;
+
+      final orderId = _shipment.orderId ?? _shipment.id;
+      final repository = sl<PickupRepository>();
+      if (fromCustomer) {
+        confirmationImage = await _capturePickupConfirmationImage();
+        if (!mounted || confirmationImage == null) return;
+      }
+      final result = fromCustomer
+          ? await repository.confirmFromCustomer(
+              orderId: orderId,
+              confirmationImage: confirmationImage!,
+            )
+          : await repository.confirmFromMerchant(orderIds: [orderId]);
+      if (!mounted) return;
+      result.fold(
+        (failure) => showLocalMessage(context, failure.errMessage),
+        (_) {
+          showLocalMessage(context, tr(context, AppLocaleKey.pickupConfirmed));
+          Navigator.pop(context, true);
+        },
+      );
+    } finally {
+      await CommonMethods.cleanupStagingFiles([confirmationImage]);
+      if (mounted) setState(() => _isSubmittingPickup = false);
+    }
+  }
+
+  Future<File?> _capturePickupConfirmationImage() async {
+    try {
+      final image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      if (image == null) {
+        if (mounted) {
+          showLocalMessage(
+            context,
+            tr(context, AppLocaleKey.confirmationPhotoRequired),
+          );
+        }
+        return null;
+      }
+      return await CommonMethods.compressImage(File(image.path));
+    } on PlatformException catch (error) {
+      if (mounted) {
+        showLocalMessage(
+          context,
+          error.message ?? tr(context, AppLocaleKey.confirmationPhotoRequired),
+        );
+      }
+      return null;
+    } catch (error) {
+      if (mounted) showLocalMessage(context, error.toString());
+      return null;
+    }
+  }
+
+  Future<bool> _verifyCurrentShipmentScan() async {
+    final scannedOrderNumber = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const _ShipmentQrScanScreen(),
+      ),
+    );
+    if (!mounted || scannedOrderNumber == null) return false;
+    final expectedOrderNumber = (_shipment.orderId ?? _shipment.id).trim();
+    if (scannedOrderNumber.trim() != expectedOrderNumber) {
+      showLocalMessage(context, tr(context, AppLocaleKey.shipmentQrMismatch));
+      return false;
+    }
+    return true;
+  }
+
   Future<bool> _confirmCollectedAmount(BuildContext context) async {
     final amount = double.tryParse(_shipment.amountLabel ?? '') ??
         _shipment.amount.toDouble();
@@ -159,6 +240,8 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final statusCubit = context.watch<ShipmentStatusCubit>();
+    final isReturnPickup =
+        ShipmentStatusApi.returnPickupStatusIds.contains(_shipment.apiStatusId);
     return Scaffold(
       appBar: AppBar(
         title: Text(tr(context, AppLocaleKey.shipmentDetails)),
@@ -175,7 +258,17 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
                 onMarkWhatsappSent: _markWhatsappSent,
               ),
               const SizedBox(height: 15),
-              if ((_shipment.apiStatusId ==
+              if (isReturnPickup) ...[
+                ActionButton(
+                  label: tr(context, AppLocaleKey.submitPickup),
+                  icon: Icons.assignment_return_outlined,
+                  color: AppColors.green,
+                  isLoading: _isSubmittingPickup,
+                  onPressed: _isSubmittingPickup
+                      ? null
+                      : () => unawaited(_submitReturnPickup()),
+                ),
+              ] else if ((_shipment.apiStatusId ==
                   ShipmentStatusApi.statusInTransit)) ...[
                 ActionButton(
                   label: tr(context, AppLocaleKey.markDelivered),

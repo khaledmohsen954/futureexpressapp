@@ -10,6 +10,7 @@ import '../../features/home/data/repositories/shift_repository.dart';
 import '../../features/home/data/repositories/home_summary_repository.dart';
 import '../../features/reports/data/repositories/daily_report_repository.dart';
 import '../../features/support/data/repositories/app_settings_repository.dart';
+import '../../features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import '../../features/shipments/data/repositories/shipments_repository.dart';
 import '../../features/shipments/presentation/cubit/shipments_cubit.dart';
 import '../../features/wallet/data/repositories/balance_repository.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/core/services/services_locator_imports.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipments_cubit.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/shipment_list.dart';
@@ -15,9 +16,11 @@ class ShipmentsScreen extends StatefulWidget {
   const ShipmentsScreen({
     super.key,
     this.repository,
+    this.sequenceStore,
   });
 
   final ShipmentsRepository? repository;
+  final ShipmentSequenceStore? sequenceStore;
 
   @override
   State<ShipmentsScreen> createState() => _ShipmentsScreenState();
@@ -135,6 +138,7 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => ShipmentsCubit(
           repository: widget.repository ?? sl<ShipmentsRepository>(),
+          sequenceStore: widget.sequenceStore,
         )
           // ..loadStatuses()
           ..loadFirstPage(),

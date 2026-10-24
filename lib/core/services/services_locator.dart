@@ -38,8 +38,14 @@ Future<void> initDependencies() async {
   sl.registerFactory<ShipmentsRepository>(
     () => ShipmentsRepository(sl<ApiConsumer>()),
   );
+  sl.registerLazySingleton<ShipmentSequenceStore>(
+    () => DailyShipmentSequenceStore(),
+  );
   sl.registerFactory<ShipmentsCubit>(
-    () => ShipmentsCubit(repository: sl<ShipmentsRepository>()),
+    () => ShipmentsCubit(
+      repository: sl<ShipmentsRepository>(),
+      sequenceStore: sl<ShipmentSequenceStore>(),
+    ),
   );
   final dio = sl<Dio>();
   if (!dio.interceptors.any((i) => i is AppInterceptors)) {

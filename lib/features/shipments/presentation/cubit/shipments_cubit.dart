@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:futureexpressapp/features/shipments/data/models/shipment_status_filter.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 
@@ -56,11 +57,15 @@ class ShipmentsState extends Equatable {
 }
 
 class ShipmentsCubit extends Cubit<ShipmentsState> {
-  ShipmentsCubit({required ShipmentsRepository repository})
-      : _repository = repository,
+  ShipmentsCubit({
+    required ShipmentsRepository repository,
+    ShipmentSequenceStore? sequenceStore,
+  })  : _repository = repository,
+        _sequenceStore = sequenceStore ?? DailyShipmentSequenceStore(),
         super(const ShipmentsState());
 
   final ShipmentsRepository _repository;
+  final ShipmentSequenceStore _sequenceStore;
   bool _loadingNextPage = false;
   int _requestGeneration = 0;
   int? _activeStatusId;
@@ -115,19 +120,50 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
         statusesError: state.statusesError,
         errorMessage: failure.errMessage,
       )),
-      (page) => emit(ShipmentsState(
-        status: ShipmentsStatus.success,
-        shipments: List.unmodifiable(page.shipments),
-        availableStatuses: state.availableStatuses,
-        statusCounts: Map.unmodifiable(page.statusCounts),
-        areStatusesLoading: state.areStatusesLoading,
-        statusesError: state.statusesError,
-        page: page.currentPage,
-        lastPage: page.lastPage,
-        total: page.total,
-        isLoadingMore: false,
-      )),
+      (page) async {
+        emit(ShipmentsState(
+          status: ShipmentsStatus.success,
+          shipments: List.unmodifiable(page.shipments),
+          availableStatuses: state.availableStatuses,
+          statusCounts: Map.unmodifiable(page.statusCounts),
+          areStatusesLoading: state.areStatusesLoading,
+          statusesError: state.statusesError,
+          page: page.currentPage,
+          lastPage: page.lastPage,
+          total: page.total,
+          isLoadingMore: false,
+        ));
+        await _applyInTransitDailyNumbers(requestGeneration);
+      },
     );
+  }
+
+  /// In-transit shipments missing the server-side [Shipment.dailyNumber] get a
+  /// day-scoped number based on the order in which they are sorted on the
+  /// In Transit tab, so the WhatsApp contact name keeps the "daily number -
+  /// order id" shape even when the API sends daily_number = null.
+  Future<void> _applyInTransitDailyNumbers(int requestGeneration) async {
+    final unnumbered = state.shipments
+        .where((shipment) =>
+            shipment.dailyNumber == null &&
+            shipment.apiStatusId == ShipmentStatusApi.statusInTransit)
+        .toList(growable: false);
+    if (unnumbered.isEmpty) return;
+    try {
+      final assigned = await _sequenceStore.assignNumbers(unnumbered);
+      if (isClosed || requestGeneration != _requestGeneration) return;
+      var updated = false;
+      final numbered = state.shipments.map((shipment) {
+        final number = assigned[shipment.id];
+        if (number == null || shipment.dailyNumber != null) return shipment;
+        updated = true;
+        return shipment.copyWith(dailyNumber: number);
+      }).toList(growable: false);
+      if (updated) emit(_copyState(shipments: numbered));
+    } catch (_) {
+      // Numbering is best-effort; cards and WhatsApp contact names fall back
+      // to the plain order id when the sequence store is unavailable.
+    }
   }
 
   Future<void> loadNextPage() async {
@@ -153,21 +189,25 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
           isLoadingMore: false,
           loadMoreError: failure.errMessage,
         )),
-        (page) => emit(ShipmentsState(
-          status: ShipmentsStatus.success,
-          shipments: List.unmodifiable([...state.shipments, ...page.shipments]),
-          availableStatuses: state.availableStatuses,
-          statusCounts: Map.unmodifiable({
-            ...state.statusCounts,
-            ...page.statusCounts,
-          }),
-          areStatusesLoading: state.areStatusesLoading,
-          statusesError: state.statusesError,
-          page: page.currentPage,
-          lastPage: page.lastPage,
-          total: page.total ?? state.total,
-          isLoadingMore: false,
-        )),
+        (page) async {
+          emit(ShipmentsState(
+            status: ShipmentsStatus.success,
+            shipments:
+                List.unmodifiable([...state.shipments, ...page.shipments]),
+            availableStatuses: state.availableStatuses,
+            statusCounts: Map.unmodifiable({
+              ...state.statusCounts,
+              ...page.statusCounts,
+            }),
+            areStatusesLoading: state.areStatusesLoading,
+            statusesError: state.statusesError,
+            page: page.currentPage,
+            lastPage: page.lastPage,
+            total: page.total ?? state.total,
+            isLoadingMore: false,
+          ));
+          await _applyInTransitDailyNumbers(requestGeneration);
+        },
       );
     } finally {
       _loadingNextPage = false;
@@ -184,6 +224,7 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
 
   ShipmentsState _copyState({
     ShipmentsStatus? status,
+    List<Shipment>? shipments,
     bool? isLoadingMore,
     String? loadMoreError,
     List<ShipmentStatusFilter>? availableStatuses,
@@ -195,7 +236,7 @@ class ShipmentsCubit extends Cubit<ShipmentsState> {
   }) =>
       ShipmentsState(
         status: status ?? state.status,
-        shipments: state.shipments,
+        shipments: shipments ?? state.shipments,
         availableStatuses: availableStatuses ?? state.availableStatuses,
         statusCounts: statusCounts ?? state.statusCounts,
         areStatusesLoading: areStatusesLoading ?? state.areStatusesLoading,

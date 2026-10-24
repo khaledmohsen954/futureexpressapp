@@ -19,6 +19,7 @@ import 'package:futureexpressapp/core/widgets/messages.dart';
 import 'package:futureexpressapp/features/pickup/data/repositories/pickup_repository.dart';
 import 'package:futureexpressapp/features/shipments/domain/shipment.dart';
 import 'package:futureexpressapp/features/scanner/presentation/widgets/qr_code_scanner.dart';
+import 'package:futureexpressapp/features/shipments/data/repositories/daily_shipment_sequence_store.dart';
 import 'package:futureexpressapp/features/shipments/data/repositories/shipments_repository.dart';
 import 'package:futureexpressapp/features/shipments/presentation/cubit/shipment_status_cubit.dart';
 import 'package:futureexpressapp/features/shipments/presentation/widgets/capture_status_image.dart';
@@ -43,10 +44,38 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_ensureDailyNumber());
+  }
+
+  @override
   void didUpdateWidget(covariant ShipmentDetailsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.shipment != widget.shipment) {
       _shipment = widget.shipment;
+      unawaited(_ensureDailyNumber());
+    }
+  }
+
+  /// A shipment opened straight from the scanner can arrive without the
+  /// server-side daily number. Assign it here so the WhatsApp contact name
+  /// keeps the "daily number - order id" shape, reusing the number the In
+  /// Transit list already stored for this shipment when one exists.
+  Future<void> _ensureDailyNumber() async {
+    final shipment = _shipment;
+    if (shipment.dailyNumber != null ||
+        shipment.apiStatusId != ShipmentStatusApi.statusInTransit) {
+      return;
+    }
+    try {
+      final store = sl<ShipmentSequenceStore>();
+      final numbers = await store.assignNumbers([shipment]);
+      final number = numbers[shipment.id];
+      if (number == null || !mounted) return;
+      setState(() => _shipment = shipment.copyWith(dailyNumber: number));
+    } catch (_) {
+      // Numbering is best-effort; the contact name falls back to the order id.
     }
   }
 
@@ -74,6 +103,13 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
       ),
     );
     return true;
+  }
+
+  Future<void> _registerCleaningContractsDischarge() async {
+    final orderId = _shipment.orderId ?? _shipment.id;
+    await sl<ShipmentsRepository>().registerCleaningContractsDischarge(
+      orderId: orderId,
+    );
   }
 
   Future<void> _submitDelivery() async {
@@ -256,6 +292,7 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
               ShipmentDetailsCard(
                 shipment: _shipment,
                 onMarkWhatsappSent: _markWhatsappSent,
+                onWhatsappOpened: _registerCleaningContractsDischarge,
               ),
               const SizedBox(height: 15),
               if (isReturnPickup) ...[

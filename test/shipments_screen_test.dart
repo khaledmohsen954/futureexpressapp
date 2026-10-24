@@ -91,6 +91,51 @@ void main() {
     );
   });
 
+  testWidgets(
+      'in-transit shipments without an API daily number get one by '
+      'their sorted order', (tester) async {
+    final state = AppState(repository: _MemoryRepository())
+      ..locale = const Locale('en', 'US');
+    final shipmentsApi = FakeShipmentsApiConsumer({
+      1: shipmentsResponse([
+        testOrder('FX-3', 17, orderId: 'FX-3'),
+        testOrder('FX-1', 17, orderId: 'FX-1'),
+        testOrder('FX-2', 17, orderId: 'FX-2'),
+      ], page: 1, lastPage: 1),
+    });
+    final fakeSequenceStore = FakeDailyShipmentSequenceStore();
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en', 'US'),
+        supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
+        home: AppScope(
+          state: state,
+          child: ShipmentsScreen(
+            repository: shipmentsApi.createRepository(),
+            sequenceStore: fakeSequenceStore,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cards =
+        tester.widgetList<ShipmentCard>(find.byType(ShipmentCard)).toList();
+    expect(
+      cards.map((card) => card.shipment.orderId).toList(),
+      ['FX-1', 'FX-2', 'FX-3'],
+    );
+    // Daily numbers follow the sorted order, so the WhatsApp contact name is
+    // always "dailyNumber-orderId" even when the API sends null.
+    expect(
+      cards.map((card) => card.sequenceNumber).toList(),
+      [1, 2, 3],
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('only supported API statuses are shown and filtered',
       (tester) async {
     final state = AppState(repository: _MemoryRepository())

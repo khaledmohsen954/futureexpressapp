@@ -24,7 +24,11 @@ class DailyShipmentSequenceStore implements ShipmentSequenceStore {
             preferences ?? _SharedPreferencesDailySequencePreferences();
 
   final DailyShipmentSequencePreferences _preferences;
-  Future<void> _pendingAssignment = Future.value();
+
+  /// Assignments are queued globally (not per instance) so concurrent callers
+  /// never read-and-extend the same day's sequence and produce duplicate
+  /// numbers.
+  static Future<void> _pendingAssignment = Future.value();
 
   @override
   Future<Map<String, int>> assignNumbers(
@@ -121,12 +125,16 @@ class DailyShipmentSequenceStore implements ShipmentSequenceStore {
 
 class _SharedPreferencesDailySequencePreferences
     implements DailyShipmentSequencePreferences {
-  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
+  /// Constructed lazily: building [SharedPreferencesAsync] requires a
+  /// registered platform instance, which only exists on real devices.
+  SharedPreferencesAsync? _preferences;
+
+  SharedPreferencesAsync get _asyncPreferences =>
+      _preferences ??= SharedPreferencesAsync();
 
   @override
-  Future<String?> getString(String key) => _preferences.getString(key);
+  Future<String?> getString(key) => _asyncPreferences.getString(key);
 
   @override
-  Future<void> setString(String key, String value) =>
-      _preferences.setString(key, value);
+  Future<void> setString(key, value) => _asyncPreferences.setString(key, value);
 }

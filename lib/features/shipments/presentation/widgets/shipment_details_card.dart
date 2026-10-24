@@ -18,10 +18,12 @@ class ShipmentDetailsCard extends StatelessWidget {
     super.key,
     this.shipment,
     required this.onMarkWhatsappSent,
+    this.onWhatsappOpened,
   });
 
   final Shipment? shipment;
   final Future<bool> Function() onMarkWhatsappSent;
+  final Future<void> Function()? onWhatsappOpened;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +34,7 @@ class ShipmentDetailsCard extends StatelessWidget {
         _CustomerCard(
           shipment: shipment,
           onMarkWhatsappSent: onMarkWhatsappSent,
+          onWhatsappOpened: onWhatsappOpened,
         ),
       ],
     );
@@ -95,10 +98,12 @@ class _CustomerCard extends StatelessWidget {
   const _CustomerCard({
     this.shipment,
     required this.onMarkWhatsappSent,
+    this.onWhatsappOpened,
   });
 
   final Shipment? shipment;
   final Future<bool> Function() onMarkWhatsappSent;
+  final Future<void> Function()? onWhatsappOpened;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +169,7 @@ class _CustomerCard extends StatelessWidget {
           _ContactButtons(
             shipment: shipment,
             onMarkWhatsappSent: onMarkWhatsappSent,
+            onWhatsappOpened: onWhatsappOpened,
           ),
         ],
       ),
@@ -198,10 +204,12 @@ class _ContactButtons extends StatefulWidget {
   const _ContactButtons({
     required this.shipment,
     required this.onMarkWhatsappSent,
+    this.onWhatsappOpened,
   });
 
   final Shipment? shipment;
   final Future<bool> Function() onMarkWhatsappSent;
+  final Future<void> Function()? onWhatsappOpened;
 
   @override
   State<_ContactButtons> createState() => _ContactButtonsState();
@@ -309,8 +317,20 @@ class _ContactButtonsState extends State<_ContactButtons>
       }
 
       if (matchingContact != null) {
+        // Replace the whole name with the new shipment number. If the customer
+        // already had a contact from a previous shipment, keep the name row
+        // metadata (so the platform renames the existing contact) but drop any
+        // old first/last/middle/nickname parts so the previous name never
+        // survives.
+        final existingName = matchingContact.name;
         await FlutterContacts.update(
-          matchingContact.copyWith(name: Name(first: contactName)),
+          matchingContact.copyWith(
+            name: Name(
+              first: contactName,
+              metadata: existingName?.metadata,
+            ),
+            displayName: contactName,
+          ),
         );
       } else {
         await FlutterContacts.create(
@@ -349,6 +369,13 @@ class _ContactButtonsState extends State<_ContactButtons>
     }
 
     if (!await _saveOrderNumberAsContactName() || !mounted) return;
+
+    // Register the cleaning contracts discharge when WhatsApp is opened. This
+    // must never block opening WhatsApp, so it runs without being awaited.
+    final onWhatsappOpened = widget.onWhatsappOpened;
+    if (onWhatsappOpened != null) {
+      unawaited(onWhatsappOpened());
+    }
 
     if (shouldSendMessage) {
       _waitingForWhatsappReturn = true;

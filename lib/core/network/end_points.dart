@@ -38,4 +38,8 @@ class EndPoints {
   static const String v3Balance = 'https://future-ex.com/api/v3/balance';
   static const String v3UpdateShift =
       'https://future-ex.com/api/v3/update-shift';
+
+  //?============================== v2 driver endpoints =====================
+  static const String v2DriversCleaningContractsDischarges =
+      'https://future-ex.com/api/v2/drivers/cleaning-contracts-discharges';
 }

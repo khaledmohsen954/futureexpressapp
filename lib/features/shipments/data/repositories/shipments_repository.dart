@@ -172,6 +172,45 @@ class ShipmentsRepository {
     );
   }
 
+  /// Registers that the driver discharged the cleaning contract linked to this
+  /// shipment. Called when the driver opens WhatsApp for the customer.
+  Future<Either<Failure, Unit>> registerCleaningContractsDischarge({
+    required String orderId,
+  }) async {
+    final normalizedOrderId = orderId.trim();
+    if (normalizedOrderId.isEmpty) {
+      return Left(ServerFailure(
+        'An order ID is required to register a cleaning contracts discharge.',
+      ));
+    }
+
+    final result = await handleDioRequest<dynamic>(
+      request: () => _apiConsumer.post(
+        EndPoints.v2DriversCleaningContractsDischarges,
+        body: {'order_id': normalizedOrderId},
+        requiresAuth: true,
+        showToast: false,
+      ),
+    );
+    return result.fold(
+      Left.new,
+      (response) {
+        if (response is Map) {
+          final success = response['success'];
+          if (success != true && success != 1 && success != '1') {
+            final message = response['message'];
+            return Left(ServerFailure(
+              message is String && message.isNotEmpty
+                  ? message
+                  : 'Unable to register the cleaning contracts discharge.',
+            ));
+          }
+        }
+        return const Right(unit);
+      },
+    );
+  }
+
   Future<Either<Failure, Unit>> confirmShipmentOtp({
     required String orderId,
     required String otp,

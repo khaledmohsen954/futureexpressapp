@@ -480,4 +480,39 @@ void main() {
       hasLength(25),
     );
   });
+
+  test('registers a cleaning contracts discharge with the shipment order id',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api
+        .createRepository()
+        .registerCleaningContractsDischarge(orderId: '8300');
+
+    expect(result.isRight(), isTrue);
+    expect(
+      api.postedPath,
+      EndPoints.v2DriversCleaningContractsDischarges,
+    );
+    expect(api.postedBody, {'order_id': '8300'});
+    expect(api.postedRequiresAuth, isTrue);
+  });
+
+  test('does not register a cleaning contracts discharge without an order id',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api
+        .createRepository()
+        .registerCleaningContractsDischarge(orderId: ' ');
+
+    expect(result.isLeft(), isTrue);
+    expect(api.postedPath, isNull);
+  });
 }

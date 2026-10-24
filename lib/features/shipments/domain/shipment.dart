@@ -71,7 +71,12 @@ class Shipment {
   final ShipmentStatus status;
   final int amount;
 
-  Shipment copyWith({ShipmentStatus? status, bool? whatsappSent}) => Shipment(
+  Shipment copyWith({
+    ShipmentStatus? status,
+    bool? whatsappSent,
+    int? dailyNumber,
+  }) =>
+      Shipment(
         id: id,
         orderId: orderId,
         customerAr: customerAr,
@@ -90,7 +95,7 @@ class Shipment {
         addressDetails: addressDetails,
         referenceNumber: referenceNumber,
         numberCount: numberCount,
-        dailyNumber: dailyNumber,
+        dailyNumber: dailyNumber ?? this.dailyNumber,
         orderContents: orderContents,
         pickupDate: pickupDate,
         amountLabel: amountLabel,

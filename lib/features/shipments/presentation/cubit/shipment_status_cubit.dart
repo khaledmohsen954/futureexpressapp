@@ -81,6 +81,7 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
       longitude: position.longitude,
       notes: notes,
       failureImage: failureImage,
+      
     );
     if (isClosed) return false;
 

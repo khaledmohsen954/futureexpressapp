@@ -274,6 +274,8 @@ class ShipmentsRepository {
     required double longitude,
     required String notes,
     File? failureImage,
+    String? delayDate,
+    String? returnReason,
   }) async {
     if (orderIds.isEmpty) {
       return Left(ServerFailure('At least one order ID is required.'));
@@ -305,6 +307,12 @@ class ShipmentsRepository {
       'longitude': longitude,
       'notes': notes,
     };
+    if (delayDate != null && delayDate.isNotEmpty) {
+      requestBody['delay_date'] = delayDate;
+    }
+    if (returnReason != null && returnReason.isNotEmpty) {
+      requestBody['return_reason'] = returnReason;
+    }
     if (requiresFailureImage) {
       requestBody['failure_image'] =
           await MultipartFile.fromFile(failureImage!.path);

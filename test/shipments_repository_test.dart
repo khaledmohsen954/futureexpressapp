@@ -231,6 +231,37 @@ void main() {
     });
   });
 
+  test('sends the delay date and selected return reason for a failure',
+      () async {
+    final api = FakeShipmentsApiConsumer(
+      const {},
+      postResponse: {'success': 1},
+    );
+
+    final result = await api.createRepository().updateShipmentStatus(
+      orderIds: ['8300'],
+      statusId: ShipmentStatusApi.statusDeliveryFailed,
+      latitude: 24.7136,
+      longitude: 46.6753,
+      notes: 'Delivery postponed',
+      failureImage: failureImage,
+      delayDate: '2026-11-05',
+      returnReason: 'Delivery postponed',
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(api.postedBody, {
+      'order_id[0]': 8300,
+      'status_id': ShipmentStatusApi.statusDeliveryFailed,
+      'latitude': 24.7136,
+      'longitude': 46.6753,
+      'notes': 'Delivery postponed',
+      'delay_date': '2026-11-05',
+      'return_reason': 'Delivery postponed',
+      'failure_image': isA<MultipartFile>(),
+    });
+  });
+
   test('returns an API rejection instead of treating it as a successful update',
       () async {
     final api = FakeShipmentsApiConsumer(

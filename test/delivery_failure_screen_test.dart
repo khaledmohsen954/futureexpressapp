@@ -19,50 +19,113 @@ class _MemoryRepository implements LocalPreviewRepository {
   Future<void> write(Map<String, dynamic> data) async {}
 }
 
-void main() {
-  testWidgets('delivery failure reason tiles paint without visibility warnings',
-      (tester) async {
-    final appState = AppState(repository: _MemoryRepository());
-    final api = createTestShipmentsApi();
-    final statusCubit = ShipmentStatusCubit(repository: api.createRepository());
-    addTearDown(appState.dispose);
-    addTearDown(statusCubit.close);
+const _shipment = Shipment(
+  id: '123',
+  customerAr: 'Customer',
+  customerEn: 'Customer',
+  addressAr: 'Riyadh',
+  addressEn: 'Riyadh',
+  customerPhone: '0501234567',
+  paymentMethod: PaymentMethod.cash,
+  status: ShipmentStatus.inTransit,
+  amount: 10,
+);
 
-    const shipment = Shipment(
-      id: '123',
-      customerAr: 'Customer',
-      customerEn: 'Customer',
-      addressAr: 'Riyadh',
-      addressEn: 'Riyadh',
-      customerPhone: '0501234567',
-      paymentMethod: PaymentMethod.cash,
-      status: ShipmentStatus.inTransit,
-      amount: 10,
-    );
-
-    await tester.pumpWidget(
-      ScreenUtilInit(
-        designSize: const Size(375, 812),
-        minTextAdapt: true,
-        builder: (context, child) => BlocProvider(
-          create: (_) => AppThemeCubit(),
-          child: MaterialApp(
-            locale: const Locale('en', 'US'),
-            supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
-            home: AppScope(
-              state: appState,
-              child: BlocProvider.value(
-                value: statusCubit,
-                child: const DeliveryFailureScreen(shipment: shipment),
-              ),
+Future<void> _pumpDeliveryFailure(
+  WidgetTester tester, {
+  required AppState appState,
+  required ShipmentStatusCubit statusCubit,
+}) async {
+  await tester.pumpWidget(
+    ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      builder: (context, child) => BlocProvider(
+        create: (_) => AppThemeCubit(),
+        child: MaterialApp(
+          locale: const Locale('en', 'US'),
+          supportedLocales: const [Locale('en', 'US'), Locale('ar', 'SA')],
+          home: AppScope(
+            state: appState,
+            child: BlocProvider.value(
+              value: statusCubit,
+              child: const DeliveryFailureScreen(shipment: _shipment),
             ),
           ),
         ),
       ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  late AppState appState;
+  late ShipmentStatusCubit statusCubit;
+
+  setUp(() {
+    appState = AppState(repository: _MemoryRepository());
+    statusCubit = ShipmentStatusCubit(
+        repository: createTestShipmentsApi().createRepository());
+    addTearDown(appState.dispose);
+    addTearDown(statusCubit.close);
+  });
+
+  testWidgets('delivery failure reason tiles paint without visibility warnings',
+      (tester) async {
+    await _pumpDeliveryFailure(
+      tester,
+      appState: appState,
+      statusCubit: statusCubit,
     );
-    await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(RadioListTile<String>), findsNWidgets(4));
+    expect(find.byType(RadioListTile<String>), findsNWidgets(5));
+  });
+
+  testWidgets('selecting postponed reason opens the date picker',
+      (tester) async {
+    await _pumpDeliveryFailure(
+      tester,
+      appState: appState,
+      statusCubit: statusCubit,
+    );
+
+    await tester.ensureVisible(find.text('Delivery postponed'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delivery postponed'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('confirming a failure asks for camera or gallery first',
+      (tester) async {
+    await _pumpDeliveryFailure(
+      tester,
+      appState: appState,
+      statusCubit: statusCubit,
+    );
+
+    await tester.ensureVisible(find.text('Incorrect address'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Incorrect address'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Confirm delivery failure'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm delivery failure'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Take a photo'), findsOneWidget);
+    expect(find.text('Choose from gallery'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }

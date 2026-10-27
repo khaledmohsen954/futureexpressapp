@@ -7,10 +7,13 @@ import 'package:futureexpressapp/core/utils/common_methods.dart';
 import 'package:futureexpressapp/core/widgets/messages.dart';
 import 'package:image_picker/image_picker.dart';
 
-Future<File?> captureStatusImage(BuildContext context) async {
+Future<File?> captureStatusImage(
+  BuildContext context, {
+  ImageSource source = ImageSource.camera,
+}) async {
   try {
     final image = await ImagePicker().pickImage(
-      source: ImageSource.camera,
+      source: source,
       imageQuality: 75,
     );
     if (!context.mounted || image == null) return null;

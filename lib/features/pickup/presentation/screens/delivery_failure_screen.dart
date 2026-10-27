@@ -12,6 +12,7 @@ import '../../../../core/theme.dart';
 import '../../../../core/utils/location_requirement.dart';
 import '../../../../core/widgets.dart';
 import '../../../shipments/presentation/widgets/capture_status_image.dart';
+import '../../../shipments/presentation/widgets/status_image_source_sheet.dart';
 
 /// Figma 11:428 — records a failed delivery against the selected shipment.
 class DeliveryFailureScreen extends StatefulWidget {
@@ -23,12 +24,14 @@ class DeliveryFailureScreen extends StatefulWidget {
 
 class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
   String? reasonKey;
+  DateTime? _postponedDate;
   bool _isSubmitting = false;
   final note = TextEditingController();
   final reasons = const [
     AppLocaleKey.reasonUnavailable,
     AppLocaleKey.reasonAddress,
     AppLocaleKey.reasonRefused,
+    AppLocaleKey.reasonPostponed,
     AppLocaleKey.reasonOther
   ];
   @override
@@ -37,21 +40,69 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
     super.dispose();
   }
 
+  void _selectReason(String? value) {
+    if (value == null) return;
+    setState(() {
+      reasonKey = value;
+      if (value != AppLocaleKey.reasonPostponed) _postponedDate = null;
+    });
+    if (value == AppLocaleKey.reasonPostponed) {
+      unawaited(_pickPostponedDate());
+    }
+  }
+
+  Future<void> _pickPostponedDate() async {
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _postponedDate ?? firstDate,
+      firstDate: firstDate,
+      lastDate: firstDate.add(const Duration(days: 90)),
+      builder: (pickerContext, child) => Theme(
+        data: Theme.of(pickerContext).copyWith(
+          colorScheme: Theme.of(pickerContext)
+              .colorScheme
+              .copyWith(primary: AppColors.red),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) setState(() => _postponedDate = picked);
+  }
+
   Future<void> _submitFailure() async {
     if (_isSubmitting) return;
     if (reasonKey == null) {
       showLocalMessage(context, tr(context, AppLocaleKey.chooseReason));
       return;
     }
+    if (reasonKey == AppLocaleKey.reasonPostponed && _postponedDate == null) {
+      await _pickPostponedDate();
+      if (!mounted) return;
+      if (_postponedDate == null) {
+        showLocalMessage(
+          context,
+          tr(context, AppLocaleKey.postponedDateRequired),
+        );
+        return;
+      }
+    }
+    final source = await pickStatusImageSource(context);
+    if (!mounted || source == null) return;
     setState(() => _isSubmitting = true);
     File? failureImage;
     try {
-      failureImage = await captureStatusImage(context);
+      failureImage = await captureStatusImage(context, source: source);
       if (!mounted || failureImage == null) return;
       final failureReason = tr(context, reasonKey!);
+      final postponedDate = _postponedDate;
       final failureNotes = note.text.trim();
       final notes = [
-        failureReason,
+        postponedDate == null
+            ? failureReason
+            : '$failureReason '
+                '(${MaterialLocalizations.of(context).formatMediumDate(postponedDate)})',
         if (failureNotes.isNotEmpty) failureNotes,
       ].join(': ');
       final locationReady =
@@ -62,6 +113,8 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
         statusId: ShipmentStatusApi.statusDeliveryFailed,
         notes: notes,
         failureImage: failureImage,
+        delayDate: postponedDate?.toIso8601String().split('T').first,
+        returnReason: failureReason,
       );
       if (!mounted) return;
       if (!success) {
@@ -93,6 +146,28 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
     }
   }
 
+  Widget _postponedDateSubtitle(BuildContext context) {
+    final date = _postponedDate;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.event_outlined, size: 16, color: AppColors.muted),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              date == null
+                  ? tr(context, AppLocaleKey.choosePostponedDate)
+                  : '${tr(context, AppLocaleKey.postponedDate)}: '
+                      '${MaterialLocalizations.of(context).formatMediumDate(date)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
         canPop: !_isSubmitting,
@@ -122,13 +197,15 @@ class _DeliveryFailureScreenState extends State<DeliveryFailureScreen> {
                         clipBehavior: Clip.antiAlias,
                         child: RadioListTile<String>(
                           title: Text(tr(context, key)),
+                          subtitle: key == AppLocaleKey.reasonPostponed
+                              ? _postponedDateSubtitle(context)
+                              : null,
                           value: key,
                           // ignore: deprecated_member_use
                           groupValue: reasonKey,
                           activeColor: AppColors.red,
                           // ignore: deprecated_member_use
-                          onChanged: (value) =>
-                              setState(() => reasonKey = value),
+                          onChanged: _selectReason,
                         ),
                       ))),
             const SizedBox(height: 13),

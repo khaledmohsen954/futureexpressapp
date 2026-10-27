@@ -43,6 +43,8 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
     required int statusId,
     required String notes,
     File? failureImage,
+    String? delayDate,
+    String? returnReason,
   }) async {
     if (state.isLoading) return false;
     emit(ShipmentStatusUpdateState(status: ShipmentStatusUpdateStatus.loading));
@@ -81,7 +83,8 @@ class ShipmentStatusCubit extends Cubit<ShipmentStatusUpdateState> {
       longitude: position.longitude,
       notes: notes,
       failureImage: failureImage,
-      
+      delayDate: delayDate,
+      returnReason: returnReason,
     );
     if (isClosed) return false;
 

@@ -177,8 +177,16 @@ abstract final class AppLocaleKey {
   static const String reasonUnavailable = 'reasonUnavailable';
   static const String reasonAddress = 'reasonAddress';
   static const String reasonRefused = 'reasonRefused';
+  static const String reasonPostponed = 'reasonPostponed';
   static const String reasonOther = 'reasonOther';
   static const String extraDetails = 'extraDetails';
+  static const String postponedDate = 'postponedDate';
+  static const String choosePostponedDate = 'choosePostponedDate';
+  static const String postponedDateRequired = 'postponedDateRequired';
+  static const String statusPhotoTitle = 'statusPhotoTitle';
+  static const String statusPhotoHint = 'statusPhotoHint';
+  static const String takePhoto = 'takePhoto';
+  static const String chooseFromGallery = 'chooseFromGallery';
   static const String confirmFailure = 'confirmFailure';
   static const String chooseReason = 'chooseReason';
   static const String failureSaved = 'failureSaved';
